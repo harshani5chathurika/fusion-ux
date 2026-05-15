@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 import Image from "next/image";
 import {
   X, Upload, Loader2, CheckCircle2, XCircle, AlertTriangle,
-  ShieldCheck, TrendingUp, DollarSign, Clock, ArrowLeft,
-  Sparkles, Eye, FileText, Scale,
+  TrendingUp, DollarSign, ArrowLeft,
+  Sparkles, Eye, FileText, Scale, Download, Copy, Wand2, Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { SEVERITY_CONFIG } from "@/types";
@@ -45,10 +45,41 @@ export function ComparisonView({ auditId, findingStatus, verificationStatus, onV
   const { comparingFinding, auditScreenshotUrl, validationResult, closeComparison, setValidationResult } = useResolution();
   const supabase = createClient();
 
+  const [afterMode, setAfterMode] = useState<"upload" | "ai">(
+    comparingFinding?.proposed_design_url ? "ai" : "upload"
+  );
   const [afterUrl, setAfterUrl] = useState<string | null>(comparingFinding?.after_screenshot_url ?? null);
   const [afterPreview, setAfterPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
+
+  // AI fix state
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [proposedUrl, setProposedUrl] = useState<string | null>(comparingFinding?.proposed_design_url ?? null);
+  const [figmaPrompt, setFigmaPrompt] = useState<string | null>(comparingFinding?.proposed_design_prompt ?? null);
+  const [aiSpec, setAiSpec] = useState<string | null>(null);
+  const [credits, setCredits] = useState<number | null>(null);
+  const [orgPlan, setOrgPlan] = useState<string>("free");
+  const [showUpgrade, setShowUpgrade] = useState(false);
+
+  // Load credits on mount
+  useEffect(() => {
+    async function loadCredits() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("organization_members")
+        .select("organizations(ai_credits, plan)")
+        .eq("user_id", user.id)
+        .single();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const org = (data as any)?.organizations;
+      setCredits(org?.ai_credits ?? 0);
+      setOrgPlan(org?.plan ?? "free");
+    }
+    loadCredits();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onDrop = useCallback(async (files: File[]) => {
     const file = files[0];
@@ -130,6 +161,65 @@ export function ComparisonView({ auditId, findingStatus, verificationStatus, onV
       toast.error("AI validation error", { description: e instanceof Error ? e.message : "Unknown error" });
     } finally {
       setIsValidating(false);
+    }
+  }
+
+  async function generateAiFix() {
+    if (!comparingFinding) return;
+    if (credits !== null && credits <= 0 && orgPlan !== "pro") {
+      setShowUpgrade(true);
+      return;
+    }
+    setIsGenerating(true);
+    try {
+      const res = await fetch("/api/ai/generate-fix", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          finding_id: comparingFinding.id,
+          audit_id: auditId,
+          screenshot_url: auditScreenshotUrl,
+          finding: {
+            title: comparingFinding.title,
+            description: comparingFinding.description,
+            severity: comparingFinding.severity,
+            heuristic_category: comparingFinding.heuristic_category,
+            heuristic_item_id: comparingFinding.heuristic_item_id,
+            ai_suggestion: comparingFinding.ai_suggestion,
+          },
+        }),
+      });
+      if (res.status === 402) {
+        setShowUpgrade(true);
+        return;
+      }
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? "Generation failed");
+      }
+      const data = await res.json();
+      setProposedUrl(data.proposed_design_url);
+      setFigmaPrompt(data.figma_prompt);
+      setAiSpec(data.specification);
+      if (data.credits_remaining !== null) setCredits(data.credits_remaining);
+      toast.success("AI design generated! ✨");
+    } catch (e) {
+      toast.error("Generation failed", { description: e instanceof Error ? e.message : "Unknown error" });
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
+  async function downloadImage(url: string, filename: string) {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+    } catch {
+      toast.error("Download failed");
     }
   }
 
@@ -271,138 +361,324 @@ export function ComparisonView({ auditId, findingStatus, verificationStatus, onV
 
         {/* RIGHT — After */}
         <div className="flex-1 flex flex-col min-w-0">
-          <div className="px-4 py-2.5 bg-green-50 dark:bg-green-950/30 border-b border-green-200 dark:border-green-800 flex items-center gap-2 flex-shrink-0">
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-            <p className="text-xs font-bold text-green-700 dark:text-green-300">AFTER — Fixed State</p>
-            {validationResult?.validated && (
-              <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-500 text-white">AI VALIDATED ✓</span>
-            )}
-          </div>
-          <div className="flex-1 overflow-auto bg-muted/20 p-4">
-            {afterUrl ? (
-              <div className="space-y-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={afterPreview ?? afterUrl}
-                  alt="After"
-                  className={cn(
-                    "w-full h-auto rounded-lg border shadow-sm transition-all",
-                    validationResult?.validated
-                      ? "border-green-400 dark:border-green-600 shadow-green-200 dark:shadow-green-900"
-                      : validationResult && !validationResult.validated
-                      ? "border-orange-400 dark:border-orange-600"
-                      : "border-border"
-                  )}
-                />
-                {/* Validation Result */}
-                {validationResult && (
-                  <div className={cn(
-                    "rounded-xl border p-4 space-y-3",
-                    validationResult.validated
-                      ? "bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800"
-                      : "bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800"
+          {/* Tab header */}
+          <div className="flex-shrink-0 border-b border-border">
+            <div className="flex">
+              <button
+                onClick={() => setAfterMode("upload")}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all",
+                  afterMode === "upload"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Upload className="h-3.5 w-3.5" />
+                Upload Fix
+              </button>
+              <button
+                onClick={() => setAfterMode("ai")}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all",
+                  afterMode === "ai"
+                    ? "border-violet-500 text-violet-600 dark:text-violet-400"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Wand2 className="h-3.5 w-3.5" />
+                Generate AI Fix
+                {orgPlan !== "pro" && credits !== null && (
+                  <span className={cn(
+                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full",
+                    credits > 0 ? "bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300" : "bg-red-100 dark:bg-red-900/40 text-red-600"
                   )}>
-                    <div className="flex items-center gap-2">
-                      {validationResult.validated
-                        ? <CheckCircle2 className="h-5 w-5 text-green-600" />
-                        : <AlertTriangle className="h-5 w-5 text-orange-600" />
-                      }
-                      <p className={cn("font-bold text-sm", validationResult.validated ? "text-green-700 dark:text-green-300" : "text-orange-700 dark:text-orange-300")}>
-                        {validationResult.validated ? "Fix Validated ✓" : "Fix Incomplete"}
-                      </p>
-                      <span className={cn("ml-auto text-xs font-bold px-2 py-0.5 rounded-full", validationResult.validated ? "bg-green-500 text-white" : "bg-orange-500 text-white")}>
-                        {validationResult.confidence}% confidence
-                      </span>
-                    </div>
-                    <p className="text-xs leading-relaxed">{validationResult.explanation}</p>
-                    {validationResult.passed_checks.length > 0 && (
-                      <div>
-                        <p className="text-[10px] font-bold text-green-700 dark:text-green-300 uppercase tracking-wider mb-1">Passed Checks</p>
-                        {validationResult.passed_checks.map((c, i) => (
-                          <div key={i} className="flex items-start gap-1.5 text-xs text-green-700 dark:text-green-300">
-                            <CheckCircle2 className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                            {c}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {validationResult.remaining_issues.length > 0 && (
-                      <div>
-                        <p className="text-[10px] font-bold text-orange-700 dark:text-orange-300 uppercase tracking-wider mb-1">Still Needs Work</p>
-                        {validationResult.remaining_issues.map((issue, i) => (
-                          <div key={i} className="flex items-start gap-1.5 text-xs text-orange-700 dark:text-orange-300">
-                            <AlertTriangle className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                            {issue}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                    {credits} left
+                  </span>
                 )}
-
-                {/* Re-upload option */}
-                {!validationResult?.validated && (
-                  <div {...getRootProps()} className="border border-dashed border-border rounded-xl p-3 text-center cursor-pointer hover:border-primary/50 hover:bg-accent/50 transition-all">
-                    <input {...getInputProps()} />
-                    <p className="text-xs text-muted-foreground">Upload a different after screenshot</p>
-                  </div>
+                {orgPlan === "pro" && (
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300">PRO</span>
                 )}
-              </div>
-            ) : (
-              <div {...getRootProps()} className={cn(
-                "h-full min-h-[300px] border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-4 cursor-pointer transition-all",
-                isDragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-accent/30"
-              )}>
-                <input {...getInputProps()} />
-                {isUploading ? (
-                  <><Loader2 className="h-8 w-8 animate-spin text-primary" /><p className="text-sm">Uploading…</p></>
-                ) : (
-                  <>
-                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
-                      <Upload className="h-7 w-7 text-primary" />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-semibold">{isDragActive ? "Drop here" : "Upload the fixed screenshot"}</p>
-                      <p className="text-xs text-muted-foreground mt-1">PNG, JPG, WebP · max 10MB</p>
-                    </div>
-                    <p className="text-xs text-muted-foreground max-w-xs text-center">
-                      Capture a screenshot of the UI after the fix has been deployed
-                    </p>
-                  </>
-                )}
-              </div>
-            )}
+              </button>
+            </div>
           </div>
 
-          {/* After details — AI suggestion + validate button */}
-          <div className="p-4 border-t border-border space-y-3 flex-shrink-0">
-            {comparingFinding.ai_suggestion && (
-              <div className="rounded-xl bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800 p-3">
-                <p className="text-[10px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider mb-1">AI Recommendation (original)</p>
-                <p className="text-xs text-violet-800 dark:text-violet-200 leading-relaxed">{comparingFinding.ai_suggestion}</p>
-              </div>
-            )}
-
-            <button
-              onClick={handleValidate}
-              disabled={!afterUrl || isValidating || validationResult?.validated}
-              className={cn(
-                "w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all",
-                validationResult?.validated
-                  ? "bg-green-500 text-white cursor-default"
-                  : "bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-              )}
-            >
-              {isValidating ? (
-                <><Loader2 className="h-4 w-4 animate-spin" />AI is checking the fix…</>
-              ) : validationResult?.validated ? (
-                <><CheckCircle2 className="h-4 w-4" />Fix Validated</>
+          {/* AI VALIDATED badge (shown regardless of tab) */}
+          {validationResult?.validated && (
+            <div className="px-4 py-1.5 bg-green-50 dark:bg-green-950/30 border-b border-green-200 dark:border-green-800 flex items-center gap-2 flex-shrink-0">
+              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+              <span className="text-[10px] font-bold text-green-700 dark:text-green-300">AI VALIDATED ✓</span>
+            </div>
+          )}
+          {/* Upload tab */}
+          {afterMode === "upload" && (
+            <div className="flex-1 overflow-auto bg-muted/20 p-4">
+              {afterUrl ? (
+                <div className="space-y-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={afterPreview ?? afterUrl}
+                    alt="After"
+                    className={cn(
+                      "w-full h-auto rounded-lg border shadow-sm transition-all",
+                      validationResult?.validated
+                        ? "border-green-400 dark:border-green-600 shadow-green-200 dark:shadow-green-900"
+                        : validationResult && !validationResult.validated
+                        ? "border-orange-400 dark:border-orange-600"
+                        : "border-border"
+                    )}
+                  />
+                  {validationResult && (
+                    <div className={cn(
+                      "rounded-xl border p-4 space-y-3",
+                      validationResult.validated
+                        ? "bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800"
+                        : "bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800"
+                    )}>
+                      <div className="flex items-center gap-2">
+                        {validationResult.validated
+                          ? <CheckCircle2 className="h-5 w-5 text-green-600" />
+                          : <AlertTriangle className="h-5 w-5 text-orange-600" />
+                        }
+                        <p className={cn("font-bold text-sm", validationResult.validated ? "text-green-700 dark:text-green-300" : "text-orange-700 dark:text-orange-300")}>
+                          {validationResult.validated ? "Fix Validated ✓" : "Fix Incomplete"}
+                        </p>
+                        <span className={cn("ml-auto text-xs font-bold px-2 py-0.5 rounded-full", validationResult.validated ? "bg-green-500 text-white" : "bg-orange-500 text-white")}>
+                          {validationResult.confidence}% confidence
+                        </span>
+                      </div>
+                      <p className="text-xs leading-relaxed">{validationResult.explanation}</p>
+                      {validationResult.passed_checks.length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-bold text-green-700 dark:text-green-300 uppercase tracking-wider mb-1">Passed Checks</p>
+                          {validationResult.passed_checks.map((c, i) => (
+                            <div key={i} className="flex items-start gap-1.5 text-xs text-green-700 dark:text-green-300">
+                              <CheckCircle2 className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                              {c}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {validationResult.remaining_issues.length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-bold text-orange-700 dark:text-orange-300 uppercase tracking-wider mb-1">Still Needs Work</p>
+                          {validationResult.remaining_issues.map((issue, i) => (
+                            <div key={i} className="flex items-start gap-1.5 text-xs text-orange-700 dark:text-orange-300">
+                              <AlertTriangle className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                              {issue}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {!validationResult?.validated && (
+                    <div {...getRootProps()} className="border border-dashed border-border rounded-xl p-3 text-center cursor-pointer hover:border-primary/50 hover:bg-accent/50 transition-all">
+                      <input {...getInputProps()} />
+                      <p className="text-xs text-muted-foreground">Upload a different after screenshot</p>
+                    </div>
+                  )}
+                </div>
               ) : (
-                <><Sparkles className="h-4 w-4" />Check Fix with AI</>
+                <div {...getRootProps()} className={cn(
+                  "h-full min-h-[300px] border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-4 cursor-pointer transition-all",
+                  isDragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-accent/30"
+                )}>
+                  <input {...getInputProps()} />
+                  {isUploading ? (
+                    <><Loader2 className="h-8 w-8 animate-spin text-primary" /><p className="text-sm">Uploading…</p></>
+                  ) : (
+                    <>
+                      <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+                        <Upload className="h-7 w-7 text-primary" />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm font-semibold">{isDragActive ? "Drop here" : "Upload the fixed screenshot"}</p>
+                        <p className="text-xs text-muted-foreground mt-1">PNG, JPG, WebP · max 10MB</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground max-w-xs text-center">
+                        Capture a screenshot of the UI after the fix has been deployed
+                      </p>
+                    </>
+                  )}
+                </div>
               )}
-            </button>
-            {!afterUrl && <p className="text-xs text-center text-muted-foreground">Upload the after screenshot first</p>}
-          </div>
+            </div>
+          )}
+
+          {/* AI Generate tab */}
+          {afterMode === "ai" && (
+            <div className="flex-1 overflow-auto bg-muted/20 p-4">
+              {proposedUrl ? (
+                <div className="space-y-3">
+                  <div className="rounded-xl overflow-hidden border border-violet-300 dark:border-violet-700 shadow-sm">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={proposedUrl} alt="AI Proposed Design" className="w-full h-auto" />
+                  </div>
+
+                  {aiSpec && (
+                    <div className="rounded-xl bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800 p-3">
+                      <p className="text-[10px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider mb-1">AI Design Specification</p>
+                      <p className="text-xs text-violet-800 dark:text-violet-200 leading-relaxed">{aiSpec}</p>
+                    </div>
+                  )}
+
+                  {figmaPrompt && (
+                    <div className="rounded-xl bg-muted border border-border p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Figma AI Prompt</p>
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(figmaPrompt); toast.success("Prompt copied!"); }}
+                          className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-background border border-border text-xs font-medium hover:bg-accent transition-colors"
+                        >
+                          <Copy className="h-3 w-3" />
+                          Copy
+                        </button>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed font-mono">{figmaPrompt}</p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => downloadImage(proposedUrl, `ai-fix-${comparingFinding.id}.png`)}
+                      className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border border-border bg-background text-xs font-medium hover:bg-accent transition-colors"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      Download PNG
+                    </button>
+                    <button
+                      onClick={() => {
+                        setAfterUrl(proposedUrl);
+                        setAfterMode("upload");
+                        toast.success("AI design set as fix — validate it below");
+                      }}
+                      className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border border-violet-300 dark:border-violet-700 bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300 text-xs font-medium hover:bg-violet-100 dark:hover:bg-violet-900/40 transition-colors"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Use as Fix & Validate
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={generateAiFix}
+                    disabled={isGenerating}
+                    className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-dashed border-violet-300 dark:border-violet-700 text-xs text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/20 transition-colors disabled:opacity-50"
+                  >
+                    {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
+                    Regenerate
+                  </button>
+                </div>
+              ) : showUpgrade ? (
+                /* Upgrade paywall */
+                <div className="h-full min-h-[300px] flex flex-col items-center justify-center gap-5 text-center p-6">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
+                    <Zap className="h-8 w-8 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg">You&apos;re out of AI Fix credits</h3>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+                      Upgrade to keep generating AI-powered design improvements
+                    </p>
+                  </div>
+                  <div className="w-full max-w-xs space-y-2">
+                    <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 p-4 text-left">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl font-bold">$10</span>
+                        <span className="text-sm text-muted-foreground">/ fix</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Pay as you go — buy individual credits</p>
+                      <button className="mt-3 w-full py-2 rounded-lg bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 transition-colors">
+                        Buy 5 Credits — $50
+                      </button>
+                    </div>
+                    <div className="rounded-xl border-2 border-violet-500 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/40 p-4 text-left relative overflow-hidden">
+                      <span className="absolute top-2 right-2 text-[9px] font-bold px-2 py-0.5 bg-violet-500 text-white rounded-full">BEST VALUE</span>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl font-bold text-violet-700 dark:text-violet-300">$99</span>
+                        <span className="text-sm text-muted-foreground">/ month</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Unlimited AI fixes + priority generation</p>
+                      <button className="mt-3 w-full py-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 text-white text-xs font-bold hover:opacity-90 transition-opacity">
+                        Upgrade to Pro
+                      </button>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowUpgrade(false)} className="text-xs text-muted-foreground hover:underline">
+                    Maybe later
+                  </button>
+                </div>
+              ) : (
+                /* Generate CTA */
+                <div className="h-full min-h-[300px] flex flex-col items-center justify-center gap-5 text-center p-6">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
+                    {isGenerating
+                      ? <Loader2 className="h-8 w-8 text-white animate-spin" />
+                      : <Wand2 className="h-8 w-8 text-white" />
+                    }
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base">Generate AI Design Fix</h3>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-xs leading-relaxed">
+                      GPT-4o + DALL·E 3 will analyze the violation and generate a visual proposed design that resolves it
+                    </p>
+                  </div>
+                  {orgPlan !== "pro" && credits !== null && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Zap className="h-3.5 w-3.5 text-violet-500" />
+                      <span>{credits} free credit{credits !== 1 ? "s" : ""} remaining</span>
+                    </div>
+                  )}
+                  <button
+                    onClick={generateAiFix}
+                    disabled={isGenerating}
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white text-sm font-bold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-violet-500/25"
+                  >
+                    {isGenerating ? (
+                      <><Loader2 className="h-4 w-4 animate-spin" />Generating design…</>
+                    ) : (
+                      <><Sparkles className="h-4 w-4" />Generate AI Fix</>
+                    )}
+                  </button>
+                  {isGenerating && (
+                    <p className="text-xs text-muted-foreground animate-pulse">
+                      Analyzing violation · Creating fix specification · Rendering UI mockup…
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Validate button — only in upload mode */}
+          {afterMode === "upload" && (
+            <div className="p-4 border-t border-border space-y-3 flex-shrink-0">
+              {comparingFinding.ai_suggestion && (
+                <div className="rounded-xl bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800 p-3">
+                  <p className="text-[10px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider mb-1">AI Recommendation</p>
+                  <p className="text-xs text-violet-800 dark:text-violet-200 leading-relaxed">{comparingFinding.ai_suggestion}</p>
+                </div>
+              )}
+              <button
+                onClick={handleValidate}
+                disabled={!afterUrl || isValidating || validationResult?.validated}
+                className={cn(
+                  "w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all",
+                  validationResult?.validated
+                    ? "bg-green-500 text-white cursor-default"
+                    : "bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                )}
+              >
+                {isValidating ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" />AI is checking the fix…</>
+                ) : validationResult?.validated ? (
+                  <><CheckCircle2 className="h-4 w-4" />Fix Validated</>
+                ) : (
+                  <><Sparkles className="h-4 w-4" />Check Fix with AI</>
+                )}
+              </button>
+              {!afterUrl && <p className="text-xs text-center text-muted-foreground">Upload the after screenshot first</p>}
+            </div>
+          )}
         </div>
       </div>
 

@@ -20,6 +20,8 @@ export interface ResolvableFinding {
   financial_risk: string | null;
   before_screenshot_url: string | null;
   after_screenshot_url: string | null;
+  proposed_design_url: string | null;
+  proposed_design_prompt: string | null;
 }
 
 export interface ValidationResult {

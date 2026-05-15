@@ -16,6 +16,7 @@ import {
   Users,
   GraduationCap,
 } from "lucide-react";
+import { CreditBadge } from "@/components/shared/CreditBadge";
 import { cn } from "@/lib/utils/cn";
 
 interface AppSidebarProps {
@@ -122,6 +123,11 @@ export function AppSidebar({ user }: AppSidebarProps) {
           </div>
         ))}
       </nav>
+
+      {/* AI Credits */}
+      <div className="px-3 pb-2">
+        <CreditBadge />
+      </div>
 
       {/* User footer */}
       <div className="p-3 border-t border-sidebar-border">

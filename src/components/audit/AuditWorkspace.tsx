@@ -53,6 +53,9 @@ interface Finding {
   priority: Priority | null;
   after_screenshot_url: string | null;
   before_screenshot_url: string | null;
+  proposed_design_url: string | null;
+  proposed_design_prompt: string | null;
+  fix_generated_at: string | null;
   validated_at: string | null;
   created_at: string;
 }

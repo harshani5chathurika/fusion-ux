@@ -61,7 +61,8 @@ export interface Organization {
   logo_url: string | null;
   website: string | null;
   industry: string | null;
-  plan: string;
+  plan: "free" | "pro";
+  ai_credits: number;
   plan_seats: number;
   settings: Record<string, unknown>;
   created_at: string;
@@ -164,6 +165,9 @@ export interface Finding {
   design_reference: string | null;
   critical_analysis: string | null;
   bounding_box: BoundingBox | null;
+  proposed_design_url: string | null;
+  proposed_design_prompt: string | null;
+  fix_generated_at: string | null;
   resolved_at: string | null;
   created_at: string;
   updated_at: string;
