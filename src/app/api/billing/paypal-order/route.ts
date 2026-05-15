@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { plan, action } = await request.json();
+    const { plan, action, order_id } = await request.json();
 
     if (action === "create") {
       const price = PRICES[plan];
@@ -74,11 +74,8 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === "capture") {
-      const { order_id } = await request.json().catch(() => ({})) as { order_id?: string };
-      const { order_id: orderId, plan: capturePlan } = await request.json().catch(() => ({ order_id: undefined, plan: undefined })) as { order_id?: string; plan?: string };
-
       const token = await getPayPalToken();
-      const captureRes = await fetch(`${PAYPAL_BASE}/v2/checkout/orders/${order_id ?? orderId}/capture`, {
+      const captureRes = await fetch(`${PAYPAL_BASE}/v2/checkout/orders/${order_id}/capture`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -87,7 +84,7 @@ export async function POST(request: NextRequest) {
       });
       const capture = await captureRes.json();
       if (capture.status === "COMPLETED") {
-        await grantCredits(supabase, user.id, capturePlan ?? plan);
+        await grantCredits(supabase, user.id, plan);
         return NextResponse.json({ success: true });
       }
       return NextResponse.json({ error: "Capture failed", details: capture }, { status: 400 });
