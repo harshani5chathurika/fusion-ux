@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
+import { OAuthButtons } from "@/components/auth/OAuthButtons";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -154,9 +155,11 @@ export default function LoginPage() {
           <div className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">or</span>
+          <span className="bg-background px-2 text-muted-foreground">or continue with</span>
         </div>
       </div>
+
+      <OAuthButtons />
 
       <p className="text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}

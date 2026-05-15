@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff, Loader2, ArrowRight, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
+import { OAuthButtons } from "@/components/auth/OAuthButtons";
 
 const signupSchema = z.object({
   full_name: z.string().min(2, "Name must be at least 2 characters"),
@@ -237,6 +238,17 @@ export default function SignupPage() {
           )}
         </button>
       </form>
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-border" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">or continue with</span>
+        </div>
+      </div>
+
+      <OAuthButtons />
 
       <p className="text-xs text-muted-foreground text-center">
         By creating an account, you agree to our{" "}
