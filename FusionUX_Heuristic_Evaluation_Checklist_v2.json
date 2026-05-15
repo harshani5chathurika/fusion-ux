@@ -1,0 +1,1659 @@
+{
+  "version": "2.0",
+  "product": "Fusion UX",
+  "categories": [
+    {
+      "number": "01",
+      "name": "Visibility of System State",
+      "sheet": "01 – Visibility of System State",
+      "item_count": 18,
+      "items": [
+        {
+          "id": "1.1",
+          "text": "Does every interface screen have a clear, descriptive title or header explaining page content?",
+          "hint": "What does the user see? Is the system status always visible?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "1.2",
+          "text": "Are selected elements clearly highlighted and visually distinct from unselected elements?",
+          "hint": "What does the user see? Is the system status always visible?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "1.3",
+          "text": "Do interactive elements change visually when hovered, selected, or interacted with?",
+          "hint": "What does the user see? Is the system status always visible?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "1.4",
+          "text": "Does the system provide immediate and clear feedback when a user completes an action?",
+          "hint": "What does the user see? Is the system status always visible?",
+          "role": "All",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "1.5",
+          "text": "Does the interface indicate where the user is within a process or workflow (e.g., progress bars, step indicators)?",
+          "hint": "What does the user see? Is the system status always visible?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "1.6",
+          "text": "Are system status indicators (loading spinners, progress bars) visible and consistently placed?",
+          "hint": "What does the user see? Is the system status always visible?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "1.7",
+          "text": "Does the system notify users when a group of tasks is completed and indicate next steps?",
+          "hint": "What does the user see? Is the system status always visible?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "1.8",
+          "text": "Does the system clearly indicate the status of background processes (loading, syncing, saving)?",
+          "hint": "What does the user see? Is the system status always visible?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "1.9",
+          "text": "Does the system inform users when processes are delayed or taking longer than expected?",
+          "hint": "What does the user see? Is the system status always visible?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "1.10",
+          "text": "Is feedback adapted to the type of action performed (success, failure, warning)?",
+          "hint": "What does the user see? Is the system status always visible?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "1.11",
+          "text": "Are animations or transitions used to reflect changes in system state without disrupting user flow?",
+          "hint": "What does the user see? Is the system status always visible?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "1.12",
+          "text": "Does the system provide skeleton loading screens or placeholders while content loads?",
+          "hint": "What does the user see? Is the system status always visible?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "1.13",
+          "text": "Does the system handle offline or degraded connectivity states with a clear, helpful message?",
+          "hint": "What does the user see? Is the system status always visible?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "1.14",
+          "text": "Does the system communicate request timeouts or server errors in plain language?",
+          "hint": "What does the user see? Is the system status always visible?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "1.15",
+          "text": "Does the system use optimistic UI updates to reflect actions immediately before server confirmation?",
+          "hint": "What does the user see? Is the system status always visible?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "1.16",
+          "text": "For time-sensitive tasks, does the system provide alerts or countdowns to notify users of constraints?",
+          "hint": "What does the user see? Is the system status always visible?",
+          "role": "All",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "1.17",
+          "text": "Does the system avoid intrusive feedback that disrupts the user's flow unnecessarily?",
+          "hint": "What does the user see? Is the system status always visible?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "1.18",
+          "text": "Are pop-up windows or dialogs positioned so they do not obscure the field or area in error?",
+          "hint": "What does the user see? Is the system status always visible?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "number": "02",
+      "name": "Match Between System and the Real World",
+      "sheet": "02 – Match Between System and R",
+      "item_count": 14,
+      "items": [
+        {
+          "id": "2.1",
+          "text": "Does the system use language, icons, and metaphors familiar to users based on real-world conventions?",
+          "hint": "Would a non-technical user understand this without training?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "2.2",
+          "text": "Are terms and concepts in the interface aligned with users' real-world vocabulary and expectations?",
+          "hint": "Would a non-technical user understand this without training?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "2.3",
+          "text": "Are visual elements (icons, buttons) designed to represent their real-world counterparts intuitively?",
+          "hint": "Would a non-technical user understand this without training?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "2.4",
+          "text": "Are actions and workflows structured to mirror real-world processes, making them more intuitive?",
+          "hint": "Would a non-technical user understand this without training?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "2.5",
+          "text": "Does the system use familiar symbols, colors, and shapes to represent actions users recognise from the real world?",
+          "hint": "Would a non-technical user understand this without training?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "2.6",
+          "text": "Are prompts and messages written in plain, conversational language — avoiding technical jargon?",
+          "hint": "Would a non-technical user understand this without training?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "2.7",
+          "text": "Does the interface use culturally familiar conventions (e.g., red for warnings, green for success)?",
+          "hint": "Would a non-technical user understand this without training?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "2.8",
+          "text": "Are numerical, date, and time formats consistent with users' regional expectations?",
+          "hint": "Would a non-technical user understand this without training?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "2.9",
+          "text": "Are error messages written in a clear, straightforward manner avoiding technical or abstract terms?",
+          "hint": "Would a non-technical user understand this without training?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "2.10",
+          "text": "Are frequently used controls positioned where users would expect them based on real-world interactions?",
+          "hint": "Would a non-technical user understand this without training?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "2.11",
+          "text": "Does the system's feedback (loading indicators, progress bars) match real-world expectations for time?",
+          "hint": "Would a non-technical user understand this without training?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "2.12",
+          "text": "Does the system avoid abstract representations of actions where a real-world alternative is clearer?",
+          "hint": "Would a non-technical user understand this without training?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "2.13",
+          "text": "Are real-world metaphors like dragging, swiping, or pinching used to manipulate objects naturally?",
+          "hint": "Would a non-technical user understand this without training?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "2.14",
+          "text": "Does the system clearly indicate task completion using recognisable real-world cues (e.g., a checkmark)?",
+          "hint": "Would a non-technical user understand this without training?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "number": "03",
+      "name": "User Control and Freedom",
+      "sheet": "03 – User Control and Freedom",
+      "item_count": 15,
+      "items": [
+        {
+          "id": "3.1",
+          "text": "Is there an undo function available at multiple levels (single action, data entry, group of actions)?",
+          "hint": "Can the user escape, undo, or go back freely?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "3.2",
+          "text": "Can users cancel operations in progress without negative consequences?",
+          "hint": "Can the user escape, undo, or go back freely?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "3.3",
+          "text": "Can users edit or modify input data before it is processed or submitted?",
+          "hint": "Can the user escape, undo, or go back freely?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "3.4",
+          "text": "Do critical actions with serious consequences have a built-in undo or confirmation step?",
+          "hint": "Can the user escape, undo, or go back freely?",
+          "role": "All",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "3.5",
+          "text": "Is there a retracing mechanism supporting multiple undo levels?",
+          "hint": "Can the user escape, undo, or go back freely?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "3.6",
+          "text": "Can users easily navigate backward between screens without losing progress?",
+          "hint": "Can the user escape, undo, or go back freely?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "3.7",
+          "text": "Does the system offer clear confirmation steps for irreversible actions before proceeding?",
+          "hint": "Can the user escape, undo, or go back freely?",
+          "role": "All",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "3.8",
+          "text": "Is there a consistent and visible way to return to the home screen or main menu at any point?",
+          "hint": "Can the user escape, undo, or go back freely?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "3.9",
+          "text": "Can users freely navigate between areas of the system without completing every step in sequence?",
+          "hint": "Can the user escape, undo, or go back freely?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "3.10",
+          "text": "Are users provided with clear exit options to leave any section or task without difficulty?",
+          "hint": "Can the user escape, undo, or go back freely?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "3.11",
+          "text": "Can users reset or restore the system to its default state without losing all progress?",
+          "hint": "Can the user escape, undo, or go back freely?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "3.12",
+          "text": "Does the system autosave long-form inputs to prevent data loss on accidental navigation?",
+          "hint": "Can the user escape, undo, or go back freely?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "3.13",
+          "text": "Does the system save session state if the user navigates away accidentally?",
+          "hint": "Can the user escape, undo, or go back freely?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "3.14",
+          "text": "Can users undo bulk operations such as mass delete or batch edit?",
+          "hint": "Can the user escape, undo, or go back freely?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "3.15",
+          "text": "Can users pause ongoing tasks and resume later without losing progress?",
+          "hint": "Can the user escape, undo, or go back freely?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "number": "04",
+      "name": "Consistency and Standards",
+      "sheet": "04 – Consistency and Standards",
+      "item_count": 14,
+      "items": [
+        {
+          "id": "4.1",
+          "text": "Have industry or company formatting standards been followed consistently across all screens?",
+          "hint": "Is this consistent with the rest of the product and platform norms?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "4.2",
+          "text": "Are all icons labelled clearly so users can understand their function?",
+          "hint": "Is this consistent with the rest of the product and platform norms?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "4.3",
+          "text": "Are visual cues (highlights, color changes) used consistently to indicate the active section?",
+          "hint": "Is this consistent with the rest of the product and platform norms?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "4.4",
+          "text": "Does each page or screen have a clear, descriptive title accurately reflecting its content?",
+          "hint": "Is this consistent with the rest of the product and platform norms?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "4.5",
+          "text": "Are labels, input fields, and action buttons consistent in style, positioning, and behaviour throughout?",
+          "hint": "Is this consistent with the rest of the product and platform norms?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "4.6",
+          "text": "Are user actions named consistently across all prompts and dialogs?",
+          "hint": "Is this consistent with the rest of the product and platform norms?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "4.7",
+          "text": "Is the language in action buttons simple, easy to understand, and memorable?",
+          "hint": "Is this consistent with the rest of the product and platform norms?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "4.8",
+          "text": "Does the system follow platform standards for function keys and navigation gestures?",
+          "hint": "Is this consistent with the rest of the product and platform norms?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "4.9",
+          "text": "Are attention-grabbing techniques (colors, flashing) used sparingly for exceptional conditions only?",
+          "hint": "Is this consistent with the rest of the product and platform norms?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "4.10",
+          "text": "Are abbreviations used without punctuation and applied consistently throughout?",
+          "hint": "Is this consistent with the rest of the product and platform norms?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "4.11",
+          "text": "Are naming conventions grammatically correct and consistently applied?",
+          "hint": "Is this consistent with the rest of the product and platform norms?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "4.12",
+          "text": "Is the visual style (colors, fonts, spacing) consistent across web, mobile, and other platforms?",
+          "hint": "Is this consistent with the rest of the product and platform norms?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "4.13",
+          "text": "Are button styles, forms, and menus consistently placed across different views?",
+          "hint": "Is this consistent with the rest of the product and platform norms?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "4.14",
+          "text": "Do all elements (icons, colors, typography) conform to a standardised style guide?",
+          "hint": "Is this consistent with the rest of the product and platform norms?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "number": "05",
+      "name": "Error Prevention and Recovery",
+      "sheet": "05 – Error Prevention and Recov",
+      "item_count": 18,
+      "items": [
+        {
+          "id": "5.1",
+          "text": "Does the design prevent problems before they occur through constraints, confirmations, or warnings?",
+          "hint": "Would a user understand what went wrong and how to fix it?",
+          "role": "QA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "5.2",
+          "text": "Are error messages constructive — avoiding criticism or blame directed at the user?",
+          "hint": "Would a user understand what went wrong and how to fix it?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "5.3",
+          "text": "Are error prompts brief, clear, and unambiguous so users can quickly understand the issue?",
+          "hint": "Would a user understand what went wrong and how to fix it?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "5.4",
+          "text": "Do error messages suggest the likely cause and clearly indicate the steps to resolve it?",
+          "hint": "Would a user understand what went wrong and how to fix it?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "5.5",
+          "text": "Do error messages avoid technical jargon, especially for non-technical users?",
+          "hint": "Would a user understand what went wrong and how to fix it?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "5.6",
+          "text": "Do error messages avoid violent, hostile, or overly negative language?",
+          "hint": "Would a user understand what went wrong and how to fix it?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "5.7",
+          "text": "Are error messages grammatically correct and consistently styled throughout the application?",
+          "hint": "Would a user understand what went wrong and how to fix it?",
+          "role": "QA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "5.8",
+          "text": "Do error messages avoid unnecessary exclamation points that create inappropriate urgency?",
+          "hint": "Would a user understand what went wrong and how to fix it?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "5.9",
+          "text": "Are error prompts displayed at the exact location of the issue, not in a generic banner?",
+          "hint": "Would a user understand what went wrong and how to fix it?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "5.10",
+          "text": "Is there a consistent visual style (color, iconography) across all error messages?",
+          "hint": "Would a user understand what went wrong and how to fix it?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "5.11",
+          "text": "Does the system allow users to undo or reverse the action that caused the error?",
+          "hint": "Would a user understand what went wrong and how to fix it?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "5.12",
+          "text": "Are visual cues (highlighted fields, icons) combined with error messages to locate the issue?",
+          "hint": "Would a user understand what went wrong and how to fix it?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "5.13",
+          "text": "Does the system offer suggested fixes or solutions that are easy to follow without consulting help docs?",
+          "hint": "Would a user understand what went wrong and how to fix it?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "5.14",
+          "text": "For systems with novice and expert users, are multiple levels of error detail available?",
+          "hint": "Would a user understand what went wrong and how to fix it?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "5.15",
+          "text": "Does the system prevent the same error recurring by offering users the option to adjust settings?",
+          "hint": "Would a user understand what went wrong and how to fix it?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "5.16",
+          "text": "Are system-generated errors clearly differentiated from user-input errors?",
+          "hint": "Would a user understand what went wrong and how to fix it?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "5.17",
+          "text": "Does the system provide a way for users to report errors or seek help if they cannot resolve it?",
+          "hint": "Would a user understand what went wrong and how to fix it?",
+          "role": "All",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "5.18",
+          "text": "Are error messages non-intrusive — not disrupting the user's current flow unnecessarily?",
+          "hint": "Would a user understand what went wrong and how to fix it?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "number": "06",
+      "name": "Recognition Over Recall",
+      "sheet": "06 – Recognition Over Recall",
+      "item_count": 12,
+      "items": [
+        {
+          "id": "6.1",
+          "text": "Are all relevant data and options visible at each step so users can track their progress?",
+          "hint": "Does the user need to remember anything between screens?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "6.2",
+          "text": "Are prompts, cues, and messages placed where the user's attention is naturally focused?",
+          "hint": "Does the user need to remember anything between screens?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "6.3",
+          "text": "Does the system grey out or remove labels for inactive functions, reducing confusion?",
+          "hint": "Does the user need to remember anything between screens?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "6.4",
+          "text": "Are items grouped logically with headings and borders to distinguish sections?",
+          "hint": "Does the user need to remember anything between screens?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "6.5",
+          "text": "Are field labels placed close to their corresponding fields without visual clutter?",
+          "hint": "Does the user need to remember anything between screens?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "6.6",
+          "text": "Are optional fields clearly marked to help users identify required inputs quickly?",
+          "hint": "Does the user need to remember anything between screens?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "6.7",
+          "text": "Is consistent color used to group related elements so users recognise associations at a glance?",
+          "hint": "Does the user need to remember anything between screens?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "6.8",
+          "text": "Does the system provide clear mapping between controls and their actions without requiring memorisation?",
+          "hint": "Does the user need to remember anything between screens?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "6.9",
+          "text": "Are there sensible defaults in menus and forms, reducing the need for frequent user adjustments?",
+          "hint": "Does the user need to remember anything between screens?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "6.10",
+          "text": "Do interface elements have clear affordance — making it obvious where and how actions are performed?",
+          "hint": "Does the user need to remember anything between screens?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "6.11",
+          "text": "Does the system surface recently used records, files, or actions to reduce repetitive navigation?",
+          "hint": "Does the user need to remember anything between screens?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "6.12",
+          "text": "Are first-run empty states helpful — explaining what belongs here and how to get started?",
+          "hint": "Does the user need to remember anything between screens?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "number": "07",
+      "name": "Flexibility, Aesthetics and Minimalism",
+      "sheet": "07 – Flexibility, Aesthetics an",
+      "item_count": 16,
+      "items": [
+        {
+          "id": "7.1",
+          "text": "Does the system reduce or eliminate unnecessary visual or auditory noise, helping users focus?",
+          "hint": "Is this the minimum needed to accomplish the task visually?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "7.2",
+          "text": "Do dialogs and pop-ups contain only necessary details — no irrelevant information?",
+          "hint": "Is this the minimum needed to accomplish the task visually?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "7.3",
+          "text": "Is only essential information displayed on screen, avoiding information overload?",
+          "hint": "Is this the minimum needed to accomplish the task visually?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "7.4",
+          "text": "Are all icons visually and conceptually distinct so users can easily differentiate between them?",
+          "hint": "Is this the minimum needed to accomplish the task visually?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "7.5",
+          "text": "Are meaningful groups of related items separated by adequate white space?",
+          "hint": "Is this the minimum needed to accomplish the task visually?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "7.6",
+          "text": "Are field labels brief, familiar, and descriptive?",
+          "hint": "Is this the minimum needed to accomplish the task visually?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "7.7",
+          "text": "Is the visual hierarchy clear, with the most important information presented prominently?",
+          "hint": "Is this the minimum needed to accomplish the task visually?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "7.8",
+          "text": "Are animations and transitions minimal, purposeful, and consistent in timing throughout?",
+          "hint": "Is this the minimum needed to accomplish the task visually?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "7.9",
+          "text": "Does the system avoid overly decorative elements or excessive animations without functional value?",
+          "hint": "Is this the minimum needed to accomplish the task visually?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "7.10",
+          "text": "Are colors used minimally and strategically to differentiate elements without overloading the interface?",
+          "hint": "Is this the minimum needed to accomplish the task visually?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "7.11",
+          "text": "Is the typography clean, consistent, and sized to ensure readability across the application?",
+          "hint": "Is this the minimum needed to accomplish the task visually?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "7.12",
+          "text": "Are all visual elements (buttons, forms, icons) consistently styled for a cohesive, professional look?",
+          "hint": "Is this the minimum needed to accomplish the task visually?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "7.13",
+          "text": "Does the layout ensure the most frequently used controls are easily accessible without searching?",
+          "hint": "Is this the minimum needed to accomplish the task visually?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "7.14",
+          "text": "Is the design flexible enough to accommodate different user behaviours without overwhelming with options?",
+          "hint": "Is this the minimum needed to accomplish the task visually?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "7.15",
+          "text": "Are screen elements designed to remain aesthetically pleasing across different display sizes?",
+          "hint": "Is this the minimum needed to accomplish the task visually?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "7.16",
+          "text": "Does the system allow efficient navigation through shortcuts or streamlined workflows for expert users?",
+          "hint": "Is this the minimum needed to accomplish the task visually?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "number": "08",
+      "name": "Adaptability and User Efficiency",
+      "sheet": "08 – Adaptability and User Effi",
+      "item_count": 16,
+      "items": [
+        {
+          "id": "8.1",
+          "text": "Does the system allow users to adjust key interface aspects (font size, color scheme, layout) as needed?",
+          "hint": "Can an expert user do this faster? Can a novice still do it?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "8.2",
+          "text": "Does the system provide keyboard shortcuts or gesture-based interactions for expert users?",
+          "hint": "Can an expert user do this faster? Can a novice still do it?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "8.3",
+          "text": "Are important controls and frequently used actions always visible without searching through menus?",
+          "hint": "Can an expert user do this faster? Can a novice still do it?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "8.4",
+          "text": "Does the system display only the most relevant actions based on the user's current context?",
+          "hint": "Can an expert user do this faster? Can a novice still do it?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "8.5",
+          "text": "Does the interface offer different modes (basic and advanced) for novice and expert users?",
+          "hint": "Can an expert user do this faster? Can a novice still do it?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "8.6",
+          "text": "Does the system allow flexible interaction methods (voice, gestures, touch) to suit user preferences?",
+          "hint": "Can an expert user do this faster? Can a novice still do it?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "8.7",
+          "text": "Does the system support bulk operations for actions users need to perform on multiple items?",
+          "hint": "Can an expert user do this faster? Can a novice still do it?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "8.8",
+          "text": "Does the system pre-fill fields intelligently using context or user history as smart defaults?",
+          "hint": "Can an expert user do this faster? Can a novice still do it?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "8.9",
+          "text": "Are primary mobile actions reachable in the bottom 60% of the screen (thumb zone compliance)?",
+          "hint": "Can an expert user do this faster? Can a novice still do it?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "8.10",
+          "text": "Are swipe, pinch, or long-press gestures discoverable via clear affordances or labels?",
+          "hint": "Can an expert user do this faster? Can a novice still do it?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "8.11",
+          "text": "Does the layout reflow sensibly across breakpoints without loss of functionality or content?",
+          "hint": "Can an expert user do this faster? Can a novice still do it?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "8.12",
+          "text": "Is contextual help available (tooltips, inline guidance) without leaving the current task?",
+          "hint": "Can an expert user do this faster? Can a novice still do it?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "8.13",
+          "text": "Does the system provide an onboarding tour or progressive disclosure to guide first-time users?",
+          "hint": "Can an expert user do this faster? Can a novice still do it?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "8.14",
+          "text": "Is help documentation easy to search and task-oriented rather than feature-oriented?",
+          "hint": "Can an expert user do this faster? Can a novice still do it?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "8.15",
+          "text": "Does the system reduce redundant or repetitive elements that slow users down?",
+          "hint": "Can an expert user do this faster? Can a novice still do it?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "8.16",
+          "text": "Can users customise navigation paths or shortcuts to streamline their personal workflow?",
+          "hint": "Can an expert user do this faster? Can a novice still do it?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "number": "09",
+      "name": "Inclusivity and Accessibility",
+      "sheet": "09 – Inclusivity and Accessibil",
+      "item_count": 18,
+      "items": [
+        {
+          "id": "9.1",
+          "text": "Does the system comply with WCAG 2.1 AA accessibility standards as a minimum?",
+          "hint": "Would a user with a disability be able to complete this task?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "9.2",
+          "text": "Are all interactive elements accessible via keyboard navigation?",
+          "hint": "Would a user with a disability be able to complete this task?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "9.3",
+          "text": "Is the interface fully compatible with screen readers (correct ARIA roles, labels, landmarks)?",
+          "hint": "Would a user with a disability be able to complete this task?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "9.4",
+          "text": "Are semantic HTML elements used appropriately for assistive technology interpretation?",
+          "hint": "Would a user with a disability be able to complete this task?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "9.5",
+          "text": "Does colour contrast meet WCAG 2.1 AA requirements (4.5:1 for text, 3:1 for UI elements)?",
+          "hint": "Would a user with a disability be able to complete this task?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "9.6",
+          "text": "Is information never communicated by colour alone — are icons or labels used alongside colour cues?",
+          "hint": "Would a user with a disability be able to complete this task?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "9.7",
+          "text": "Are touch targets at least 44×44px on mobile interfaces?",
+          "hint": "Would a user with a disability be able to complete this task?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "9.8",
+          "text": "Does the interface support both mouse-based and touch-based navigation?",
+          "hint": "Would a user with a disability be able to complete this task?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "9.9",
+          "text": "Can users adjust text size without breaking the layout or functionality?",
+          "hint": "Would a user with a disability be able to complete this task?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "9.10",
+          "text": "Are animations and flashing elements designed to minimise risks for users with photosensitive conditions?",
+          "hint": "Would a user with a disability be able to complete this task?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "9.11",
+          "text": "Does the interface respect the OS-level prefers-reduced-motion accessibility setting?",
+          "hint": "Would a user with a disability be able to complete this task?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "9.12",
+          "text": "Does the interface respect OS-level dark/light mode preferences and maintain sufficient contrast?",
+          "hint": "Would a user with a disability be able to complete this task?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "9.13",
+          "text": "Are auditory cues supplemented with visual or textual alternatives for deaf or hard-of-hearing users?",
+          "hint": "Would a user with a disability be able to complete this task?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "9.14",
+          "text": "Are large touch targets and clear labels provided for users with motor impairments?",
+          "hint": "Would a user with a disability be able to complete this task?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "9.15",
+          "text": "Can users navigate effectively using assistive technologies such as voice commands?",
+          "hint": "Would a user with a disability be able to complete this task?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "9.16",
+          "text": "Is the content written at an accessible reading level (WCAG 3.1.5 guideline)?",
+          "hint": "Would a user with a disability be able to complete this task?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "9.17",
+          "text": "Is the interface free of unnecessary cognitive complexity for users with cognitive impairments?",
+          "hint": "Would a user with a disability be able to complete this task?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "9.18",
+          "text": "Does the layout mirror correctly for right-to-left (RTL) languages if applicable?",
+          "hint": "Would a user with a disability be able to complete this task?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "number": "10",
+      "name": "Information Architecture",
+      "sheet": "10 – Information Architecture",
+      "item_count": 12,
+      "items": [
+        {
+          "id": "10.1",
+          "text": "Is navigation logically organised and does it reflect user mental models rather than system architecture?",
+          "hint": "Can the user find this without help or guessing?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "10.2",
+          "text": "Are navigation labels descriptive, unambiguous, and written in user language?",
+          "hint": "Can the user find this without help or guessing?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "10.3",
+          "text": "Does the global navigation remain consistent in structure and labelling across all pages and states?",
+          "hint": "Can the user find this without help or guessing?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "10.4",
+          "text": "Do breadcrumbs or wayfinding cues clearly indicate where users are within the product hierarchy?",
+          "hint": "Can the user find this without help or guessing?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "10.5",
+          "text": "Is search available where users expect it, and do results reflect user intent accurately?",
+          "hint": "Can the user find this without help or guessing?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "10.6",
+          "text": "Are related content and features grouped intuitively so users find them without guessing?",
+          "hint": "Can the user find this without help or guessing?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "10.7",
+          "text": "Does every screen have a clear next action or exit path — no dead ends exist?",
+          "hint": "Can the user find this without help or guessing?",
+          "role": "QA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "10.8",
+          "text": "Does mobile navigation maintain the same structural logic as desktop navigation?",
+          "hint": "Can the user find this without help or guessing?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "10.9",
+          "text": "Do page titles accurately describe content and match corresponding navigation labels?",
+          "hint": "Can the user find this without help or guessing?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "10.10",
+          "text": "Does the hierarchy of pages and sections reflect the frequency and importance of user tasks?",
+          "hint": "Can the user find this without help or guessing?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "10.11",
+          "text": "Are filters and sorting controls visible and easy to use wherever content lists are present?",
+          "hint": "Can the user find this without help or guessing?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "10.12",
+          "text": "Do deep links and shared URLs preserve context and state correctly?",
+          "hint": "Can the user find this without help or guessing?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "number": "11",
+      "name": "Content and Microcopy",
+      "sheet": "11 – Content and Microcopy",
+      "item_count": 12,
+      "items": [
+        {
+          "id": "11.1",
+          "text": "Do button labels clearly describe the action that will occur (e.g., 'Save changes' not 'OK')?",
+          "hint": "Is the copy clear, specific, and in the user's language?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "11.2",
+          "text": "Are empty states helpful — explaining what belongs here and providing a clear call to action?",
+          "hint": "Is the copy clear, specific, and in the user's language?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "11.3",
+          "text": "Is onboarding copy concise, action-oriented, and free of feature-listing?",
+          "hint": "Is the copy clear, specific, and in the user's language?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "11.4",
+          "text": "Do tooltips and helper text reduce ambiguity without overwhelming users?",
+          "hint": "Is the copy clear, specific, and in the user's language?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "11.5",
+          "text": "Is the tone of voice consistent across all screens, states, and notification types?",
+          "hint": "Is the copy clear, specific, and in the user's language?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "11.6",
+          "text": "Do placeholder texts in inputs provide useful examples rather than merely repeating the field name?",
+          "hint": "Is the copy clear, specific, and in the user's language?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "11.7",
+          "text": "Are confirmation messages specific about what was done (e.g., 'Project deleted' not 'Done')?",
+          "hint": "Is the copy clear, specific, and in the user's language?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "11.8",
+          "text": "Are loading messages informative and written to reduce perceived wait time where possible?",
+          "hint": "Is the copy clear, specific, and in the user's language?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "11.9",
+          "text": "Is legal and consent language plain, scannable, and free of legalese?",
+          "hint": "Is the copy clear, specific, and in the user's language?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "11.10",
+          "text": "Is content scannable — using headings, short paragraphs, and bullets appropriately?",
+          "hint": "Is the copy clear, specific, and in the user's language?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "11.11",
+          "text": "Are notifications and alerts written in active voice with clear next steps?",
+          "hint": "Is the copy clear, specific, and in the user's language?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "11.12",
+          "text": "Does the interface avoid gendered, culturally exclusive, or ableist language?",
+          "hint": "Is the copy clear, specific, and in the user's language?",
+          "role": "All",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "number": "12",
+      "name": "Trust, Privacy and Data UX",
+      "sheet": "12 – Trust, Privacy and Data UX",
+      "item_count": 8,
+      "items": [
+        {
+          "id": "12.1",
+          "text": "Is cookie consent and data collection presented clearly with granular opt-in/opt-out controls?",
+          "hint": "Does the user understand what data is collected and why?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "12.2",
+          "text": "Are data permission requests specific and contextual — explained at the point of need?",
+          "hint": "Does the user understand what data is collected and why?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "12.3",
+          "text": "Does the system make it easy for users to view, edit, and delete their personal data?",
+          "hint": "Does the user understand what data is collected and why?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "12.4",
+          "text": "Are privacy notices written in plain language and accessible without legal training?",
+          "hint": "Does the user understand what data is collected and why?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "12.5",
+          "text": "Does the system clearly communicate what data is collected and how it will be used?",
+          "hint": "Does the user understand what data is collected and why?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "12.6",
+          "text": "Are security-sensitive actions (password change, account deletion) clearly confirmed with appropriate friction?",
+          "hint": "Does the user understand what data is collected and why?",
+          "role": "Dev",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "12.7",
+          "text": "Does the interface reassure users at key trust points (checkout, sign-up, data submission)?",
+          "hint": "Does the user understand what data is collected and why?",
+          "role": "UX",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        },
+        {
+          "id": "12.8",
+          "text": "Are third-party integrations or data-sharing moments clearly disclosed to users?",
+          "hint": "Does the user understand what data is collected and why?",
+          "role": "BA",
+          "response": null,
+          "severity": null,
+          "notes": ""
+        }
+      ]
+    }
+  ]
+}
