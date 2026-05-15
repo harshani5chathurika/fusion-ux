@@ -38,11 +38,10 @@ const REFERENCE = `FUXPAY-${Math.random().toString(36).substring(2, 8).toUpperCa
 const BANK_ACCOUNTS = {
   revolut: {
     label: "Revolut",
-    color: "bg-[#0666EB]",
     fields: [
-      { label: "Account Name", value: "Harshani Gajanayake" },
-      { label: "IBAN", value: "IT25A0366901600278296175167" },
-      { label: "BIC / SWIFT", value: "REVOITM2" },
+      { label: "Account Name", value: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME ?? "" },
+      { label: "IBAN", value: process.env.NEXT_PUBLIC_BANK_IBAN ?? "" },
+      { label: "BIC / SWIFT", value: process.env.NEXT_PUBLIC_BANK_BIC ?? "" },
       { label: "Bank", value: "Revolut Bank UAB (Italy)" },
     ],
   },
@@ -251,7 +250,7 @@ export function UpgradeModal({ onClose, onSuccess }: UpgradeModalProps) {
 
               <button
                 onClick={() => copyToClipboard(
-                  `Account Name: Harshani Gajanayake\nIBAN: IT25A0366901600278296175167\nBIC: REVOITM2\nBank: Revolut Bank UAB (Italy)\nAmount: ${selectedPrice?.price} USD\nReference: ${reference}`
+                  `Account Name: ${process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME}\nIBAN: ${process.env.NEXT_PUBLIC_BANK_IBAN}\nBIC: ${process.env.NEXT_PUBLIC_BANK_BIC}\nBank: Revolut Bank UAB (Italy)\nAmount: ${selectedPrice?.price} USD\nReference: ${reference}`
                 )}
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border bg-background text-sm font-medium hover:bg-accent transition-colors"
               >
