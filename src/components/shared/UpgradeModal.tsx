@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Zap, Check, Globe, CreditCard, Loader2 } from "lucide-react";
 import {
   PayPalScriptProvider,
@@ -114,6 +114,18 @@ const HOSTED_FIELD_STYLES = {
 export function UpgradeModal({ onClose, onSuccess }: UpgradeModalProps) {
   const [selectedPlan, setSelectedPlan] = useState<Plan>("credits_5");
   const [payMethod, setPayMethod] = useState<PayMethod>("card");
+  const [clientToken, setClientToken] = useState<string | null>(null);
+  const [tokenLoading, setTokenLoading] = useState(false);
+
+  useEffect(() => {
+    if (payMethod !== "card") return;
+    setTokenLoading(true);
+    fetch("/api/billing/paypal-client-token")
+      .then((r) => r.json())
+      .then((d) => { if (d.client_token) setClientToken(d.client_token); })
+      .catch(() => {})
+      .finally(() => setTokenLoading(false));
+  }, [payMethod]);
 
   const selectedPrice = PLANS.find((p) => p.id === selectedPlan);
 
@@ -249,8 +261,19 @@ export function UpgradeModal({ onClose, onSuccess }: UpgradeModalProps) {
 
           {/* Card payment via PayPal Hosted Fields */}
           {payMethod === "card" && (
+            tokenLoading ? (
+              <div className="flex items-center justify-center py-8 gap-2 text-muted-foreground text-sm">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading secure payment form…
+              </div>
+            ) : !clientToken ? (
+              <div className="rounded-xl border border-border bg-muted/30 p-4 text-center text-sm text-muted-foreground">
+                Card payment unavailable — PayPal is not configured yet.
+              </div>
+            ) :
             <PayPalScriptProvider options={{
               clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? "",
+              dataClientToken: clientToken,
               currency: "USD",
               components: "hosted-fields",
               intent: "capture",
@@ -312,7 +335,7 @@ export function UpgradeModal({ onClose, onSuccess }: UpgradeModalProps) {
             </PayPalScriptProvider>
           )}
 
-          {/* PayPal */}
+          {/* PayPal buttons */}
           {payMethod === "paypal" && (
             <PayPalScriptProvider options={{
               clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? "",
