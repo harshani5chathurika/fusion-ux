@@ -41,7 +41,6 @@ function AppleIcon() {
 const OAUTH_PROVIDERS: { id: Provider; label: string; icon: React.ReactNode }[] = [
   { id: "google", label: "Continue with Google", icon: <GoogleIcon /> },
   { id: "azure", label: "Continue with Microsoft", icon: <MicrosoftIcon /> },
-  { id: "apple", label: "Continue with Apple", icon: <AppleIcon /> },
 ];
 
 export function OAuthButtons() {
