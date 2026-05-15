@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const dynamic = "force-dynamic";
 
@@ -97,21 +98,26 @@ Return a JSON object with these exact keys:
       return NextResponse.json({ error: "Failed to parse AI specification" }, { status: 500 });
     }
 
-    // Step 2: DALL-E 3 generates the fixed UI mockup
-    const imageResponse = await openai.images.generate({
-      model: "dall-e-3",
-      prompt: spec.dalle_prompt,
-      size: "1792x1024",
-      quality: "hd",
-      n: 1,
+    // Step 2: Gemini generates the fixed UI mockup
+    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
+    const imageModel = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash-exp-image-generation",
     });
 
-    const imageUrl = imageResponse.data?.[0]?.url;
-    if (!imageUrl) return NextResponse.json({ error: "Image generation failed" }, { status: 500 });
+    const imageResult = await imageModel.generateContent({
+      contents: [{ role: "user", parts: [{ text: `Generate a clean, modern UI mockup image. ${spec.dalle_prompt}` }] }],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      generationConfig: { responseModalities: ["IMAGE"] } as any,
+    });
 
-    // Step 3: Download and upload to Supabase storage
-    const imgRes = await fetch(imageUrl);
-    const imgBuffer = Buffer.from(await imgRes.arrayBuffer());
+    let imgBuffer: Buffer | null = null;
+    for (const part of imageResult.response.candidates?.[0]?.content?.parts ?? []) {
+      if (part.inlineData?.data) {
+        imgBuffer = Buffer.from(part.inlineData.data, "base64");
+        break;
+      }
+    }
+    if (!imgBuffer) return NextResponse.json({ error: "Image generation failed" }, { status: 500 });
 
     const storagePath = `${user.id}/${audit_id}/ai_fix_${finding_id}_${Date.now()}.png`;
     const { error: uploadError } = await supabase.storage
