@@ -6,8 +6,6 @@ import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 import { toast } from "sonner";
 
-type Provider = "google" | "azure" | "apple";
-
 function GoogleIcon() {
   return (
     <svg className="h-4 w-4" viewBox="0 0 24 24">
@@ -19,44 +17,38 @@ function GoogleIcon() {
   );
 }
 
-function MicrosoftIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24">
-      <path fill="#f25022" d="M1 1h10v10H1z"/>
-      <path fill="#00a4ef" d="M13 1h10v10H13z"/>
-      <path fill="#7fba00" d="M1 13h10v10H1z"/>
-      <path fill="#ffb900" d="M13 13h10v10H13z"/>
-    </svg>
-  );
-}
-
-function AppleIcon() {
+function GitHubIcon() {
   return (
     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
     </svg>
   );
 }
 
-const OAUTH_PROVIDERS: { id: Provider; label: string; icon: React.ReactNode }[] = [
-  { id: "google", label: "Continue with Google", icon: <GoogleIcon /> },
-  { id: "azure", label: "Continue with Microsoft", icon: <MicrosoftIcon /> },
-];
+function FigmaIcon() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M8 24c2.208 0 4-1.792 4-4v-4H8c-2.208 0-4 1.792-4 4s1.792 4 4 4z" fill="#0ACF83"/>
+      <path d="M4 12c0-2.208 1.792-4 4-4h4v8H8c-2.208 0-4-1.792-4-4z" fill="#A259FF"/>
+      <path d="M4 4c0-2.208 1.792-4 4-4h4v8H8C5.792 8 4 6.208 4 4z" fill="#F24E1E"/>
+      <path d="M12 0h4c2.208 0 4 1.792 4 4s-1.792 4-4 4h-4V0z" fill="#FF7262"/>
+      <path d="M20 12c0 2.208-1.792 4-4 4s-4-1.792-4-4 1.792-4 4-4 4 1.792 4 4z" fill="#1ABCFE"/>
+    </svg>
+  );
+}
 
 export function OAuthButtons() {
-  const [loading, setLoading] = useState<Provider | null>(null);
+  const [loading, setLoading] = useState<string | null>(null);
   const supabase = createClient();
 
-  async function handleOAuth(provider: Provider) {
-    setLoading(provider);
+  async function handleGoogle() {
+    setLoading("google");
     try {
       const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
       });
-      if (error) toast.error(`${provider} sign-in failed`, { description: error.message });
+      if (error) toast.error("Google sign-in failed", { description: error.message });
     } catch {
       toast.error("Sign-in failed. Please try again.");
     } finally {
@@ -64,13 +56,39 @@ export function OAuthButtons() {
     }
   }
 
+  async function handleGitHub() {
+    setLoading("github");
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "github",
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      });
+      if (error) toast.error("GitHub sign-in failed", { description: error.message });
+    } catch {
+      toast.error("Sign-in failed. Please try again.");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  function handleFigma() {
+    setLoading("figma");
+    window.location.href = "/auth/figma";
+  }
+
+  const buttons = [
+    { id: "google", label: "Continue with Google", icon: <GoogleIcon />, onClick: handleGoogle },
+    { id: "github", label: "Continue with GitHub", icon: <GitHubIcon />, onClick: handleGitHub },
+    { id: "figma", label: "Continue with Figma", icon: <FigmaIcon />, onClick: handleFigma },
+  ];
+
   return (
     <div className="space-y-2.5">
-      {OAUTH_PROVIDERS.map(({ id, label, icon }) => (
+      {buttons.map(({ id, label, icon, onClick }) => (
         <button
           key={id}
           type="button"
-          onClick={() => handleOAuth(id)}
+          onClick={onClick}
           disabled={loading !== null}
           className={cn(
             "w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-lg border",
