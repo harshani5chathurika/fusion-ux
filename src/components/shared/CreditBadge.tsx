@@ -83,7 +83,7 @@ export function CreditBadge() {
             "h-full rounded-full transition-all",
             isEmpty ? "bg-red-500" : isLow ? "bg-orange-500" : "bg-violet-500"
           )}
-          style={{ width: `${Math.min(100, (credits / 5) * 100)}%` }}
+          style={{ width: `${Math.min(100, (credits / 3) * 100)}%` }}
         />
       </div>
 

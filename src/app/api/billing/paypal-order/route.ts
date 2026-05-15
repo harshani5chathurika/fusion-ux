@@ -22,8 +22,9 @@ async function getPayPalToken() {
 }
 
 const PRICES: Record<string, { amount: string; description: string }> = {
-  credits_5: { amount: "50.00", description: "5 AI Fix Credits — Fusion UX" },
-  pro_monthly: { amount: "99.00", description: "Fusion UX Pro — Monthly" },
+  credits_10: { amount: "10.00", description: "10 AI Fix Credits — Fusion UX" },
+  pro_monthly: { amount: "25.00", description: "Fusion UX Pro — Monthly" },
+  pro_yearly:  { amount: "240.00", description: "Fusion UX Pro — Annual" },
 };
 
 export async function POST(request: NextRequest) {
@@ -110,9 +111,9 @@ async function grantCredits(supabase: any, userId: string, plan: string) {
   const org = (member as any).organizations;
   const orgId = member.organization_id;
 
-  if (plan === "credits_5") {
-    await supabase.from("organizations").update({ ai_credits: (org?.ai_credits ?? 0) + 5 }).eq("id", orgId);
-  } else if (plan === "pro_monthly") {
+  if (plan === "credits_10") {
+    await supabase.from("organizations").update({ ai_credits: (org?.ai_credits ?? 0) + 10 }).eq("id", orgId);
+  } else if (plan === "pro_monthly" || plan === "pro_yearly") {
     await supabase.from("organizations").update({ plan: "pro", ai_credits: 9999 }).eq("id", orgId);
   }
 }
