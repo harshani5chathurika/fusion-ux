@@ -156,7 +156,7 @@ export function NewAuditForm() {
       // 2b. Upload screenshots if image audit
       const uploadedUrls: string[] = [];
       if (uploadedFiles.length > 0) {
-        for (const [idx, uploadedFile] of uploadedFiles.entries()) {
+        for (const [idx, uploadedFile] of Array.from(uploadedFiles.entries())) {
           const ext = uploadedFile.file.name.split(".").pop() ?? "png";
           const path = `${user.id}/${audit.id}/screenshot_${idx + 1}.${ext}`;
 

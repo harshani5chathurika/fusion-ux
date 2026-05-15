@@ -72,7 +72,8 @@ export async function POST(request: NextRequest) {
       preparer_name: profile?.full_name ?? user.email ?? "Fusion UX",
     };
 
-    const pdfBuffer = await renderToBuffer(React.createElement(ReportDocument, { data: reportData }));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pdfBuffer = await renderToBuffer(React.createElement(ReportDocument, { data: reportData }) as any);
 
     // Try uploading to storage (works if bucket allows PDFs — won't fail the response)
     let fileUrl: string | null = null;

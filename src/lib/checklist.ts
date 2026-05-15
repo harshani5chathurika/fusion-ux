@@ -1,4 +1,4 @@
-import type { HeuristicChecklist } from "@/types";
+import type { HeuristicChecklist, HeuristicCategory, HeuristicItem } from "@/types";
 
 // Your proprietary 12-category heuristic checklist
 // Loaded from the JSON and used as the AI evaluation engine

@@ -554,13 +554,13 @@ export function ReportDocument({ data }: { data: ReportData }) {
           </View>
           {findings.slice(0, 20).map((finding, i) => (
             <View key={i} style={[styles.tableRow, i % 2 === 0 ? {} : { backgroundColor: "#f9fafb" }]}>
-              <Text style={[styles.tableCell, { width: "35%" }]} numberOfLines={2}>
+              <Text style={[styles.tableCell, { width: "35%" }]}>
                 {finding.title}
               </Text>
               <Text style={[styles.tableCell, { width: "12%", textTransform: "capitalize" }]}>
                 {finding.severity}
               </Text>
-              <Text style={[styles.tableCell, { width: "25%" }]} numberOfLines={1}>
+              <Text style={[styles.tableCell, { width: "25%" }]}>
                 {finding.heuristic_category ?? "—"}
               </Text>
               <Text style={[styles.tableCell, { width: "15%" }]}>
