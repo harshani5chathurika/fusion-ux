@@ -19,7 +19,8 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setAll(cookiesToSet: any[]) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (cookiesToSet as any[]).forEach(({ name, value }: { name: string; value: string }) =>
             request.cookies.set(name, value)
