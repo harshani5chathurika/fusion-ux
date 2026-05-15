@@ -29,6 +29,8 @@ export async function GET(request: NextRequest) {
     });
 
     if (!tokenRes.ok) {
+      const body = await tokenRes.text().catch(() => "");
+      console.error("Figma token exchange failed:", tokenRes.status, body);
       return NextResponse.redirect(`${appUrl}/login?error=figma_token_failed`);
     }
 
@@ -52,9 +54,9 @@ export async function GET(request: NextRequest) {
 
     const admin = createAdminClient();
 
-    // Find or create Supabase user
-    const { data: { users } } = await admin.auth.admin.listUsers();
-    let supabaseUser = users.find((u) => u.email === email);
+    // Find or create Supabase user by email
+    const { data: existingUsers } = await admin.auth.admin.listUsers({ perPage: 1000 });
+    let supabaseUser = existingUsers?.users?.find((u) => u.email === email) ?? null;
 
     if (!supabaseUser) {
       const { data: { user }, error } = await admin.auth.admin.createUser({
@@ -68,6 +70,7 @@ export async function GET(request: NextRequest) {
         },
       });
       if (error || !user) {
+        console.error("Figma create user error:", error?.message);
         return NextResponse.redirect(`${appUrl}/login?error=figma_create_failed`);
       }
       supabaseUser = user;

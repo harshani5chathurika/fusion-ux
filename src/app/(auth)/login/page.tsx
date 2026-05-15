@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -19,11 +19,30 @@ const loginSchema = z.object({
 
 type LoginForm = z.infer<typeof loginSchema>;
 
+const ERROR_MESSAGES: Record<string, string> = {
+  figma_no_code: "Figma login was cancelled or failed.",
+  figma_token_failed: "Failed to connect to Figma. Check your app credentials.",
+  figma_user_failed: "Could not retrieve your Figma account info.",
+  figma_no_email: "Your Figma account has no email address.",
+  figma_create_failed: "Failed to create your account. Please try again.",
+  figma_session_failed: "Failed to start your session. Please try again.",
+  figma_failed: "Figma login failed. Please try again.",
+  figma_not_configured: "Figma login is not configured.",
+};
+
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClient();
+
+  useEffect(() => {
+    const error = searchParams.get("error");
+    if (error && ERROR_MESSAGES[error]) {
+      toast.error("Login failed", { description: ERROR_MESSAGES[error] });
+    }
+  }, [searchParams]);
 
   const {
     register,
