@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_ROUTES = ["/login", "/signup", "/forgot-password", "/verify-email", "/"];
+const PUBLIC_ROUTES = ["/login", "/signup", "/forgot-password", "/verify-email", "/", "/auth/figma", "/auth/figma/callback", "/auth/callback"];
 
 export async function middleware(request: NextRequest) {
   try {
@@ -38,7 +38,7 @@ export async function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
 
     const isPublicRoute = PUBLIC_ROUTES.some(
-      (route) => pathname === route || pathname.startsWith("/api/auth")
+      (route) => pathname === route || pathname.startsWith("/api/auth") || pathname.startsWith("/auth/")
     );
 
     if (!user && !isPublicRoute) {
