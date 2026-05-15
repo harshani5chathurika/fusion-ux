@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import { Zap } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
+import { UpgradeModal } from "./UpgradeModal";
 
 export function CreditBadge() {
   const [credits, setCredits] = useState<number | null>(null);
   const [plan, setPlan] = useState<string>("free");
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -43,9 +45,10 @@ export function CreditBadge() {
   if (credits === null) return null;
 
   const isEmpty = credits <= 0;
-  const isLow = credits === 1;
+  const isLow = credits > 0 && credits <= 2;
 
   return (
+    <>
     <div className={cn(
       "rounded-lg border px-3 py-2 space-y-1.5",
       isEmpty
@@ -80,19 +83,30 @@ export function CreditBadge() {
             "h-full rounded-full transition-all",
             isEmpty ? "bg-red-500" : isLow ? "bg-orange-500" : "bg-violet-500"
           )}
-          style={{ width: `${Math.min(100, (credits / 2) * 100)}%` }}
+          style={{ width: `${Math.min(100, (credits / 5) * 100)}%` }}
         />
       </div>
 
       <p className="text-[10px] text-muted-foreground">
         {isEmpty ? "No credits left — " : isLow ? "Almost out — " : "Free tier · "}
-        <button className={cn(
-          "font-semibold underline",
-          isEmpty ? "text-red-600 dark:text-red-400" : isLow ? "text-orange-600 dark:text-orange-400" : "text-violet-600 dark:text-violet-400"
-        )}>
+        <button
+          onClick={() => setShowUpgrade(true)}
+          className={cn(
+            "font-semibold underline",
+            isEmpty ? "text-red-600 dark:text-red-400" : isLow ? "text-orange-600 dark:text-orange-400" : "text-violet-600 dark:text-violet-400"
+          )}
+        >
           Upgrade to Pro
         </button>
       </p>
     </div>
+
+    {showUpgrade && (
+      <UpgradeModal
+        onClose={() => setShowUpgrade(false)}
+        onSuccess={() => { setShowUpgrade(false); window.location.reload(); }}
+      />
+    )}
+    </>
   );
 }

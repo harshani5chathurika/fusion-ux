@@ -9,6 +9,7 @@ import {
   TrendingUp, DollarSign, ArrowLeft,
   Sparkles, Eye, FileText, Scale, Download, Copy, Wand2, Zap,
 } from "lucide-react";
+import { UpgradeModal } from "@/components/shared/UpgradeModal";
 import { cn } from "@/lib/utils/cn";
 import { SEVERITY_CONFIG } from "@/types";
 import { createClient } from "@/lib/supabase/client";
@@ -569,43 +570,21 @@ export function ComparisonView({ auditId, findingStatus, verificationStatus, onV
                   </button>
                 </div>
               ) : showUpgrade ? (
-                /* Upgrade paywall */
-                <div className="h-full min-h-[300px] flex flex-col items-center justify-center gap-5 text-center p-6">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
-                    <Zap className="h-8 w-8 text-white" />
+                <div className="h-full min-h-[300px] flex flex-col items-center justify-center gap-4 text-center p-6">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
+                    <Zap className="h-7 w-7 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-lg">You&apos;re out of AI Fix credits</h3>
-                    <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                      Upgrade to keep generating AI-powered design improvements
-                    </p>
+                    <h3 className="font-bold text-base">Out of AI Fix credits</h3>
+                    <p className="text-xs text-muted-foreground mt-1">Upgrade to generate more design fixes</p>
                   </div>
-                  <div className="w-full max-w-xs space-y-2">
-                    <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/30 p-4 text-left">
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-bold">$10</span>
-                        <span className="text-sm text-muted-foreground">/ fix</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">Pay as you go — buy individual credits</p>
-                      <button className="mt-3 w-full py-2 rounded-lg bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 transition-colors">
-                        Buy 5 Credits — $50
-                      </button>
-                    </div>
-                    <div className="rounded-xl border-2 border-violet-500 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/40 p-4 text-left relative overflow-hidden">
-                      <span className="absolute top-2 right-2 text-[9px] font-bold px-2 py-0.5 bg-violet-500 text-white rounded-full">BEST VALUE</span>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-bold text-violet-700 dark:text-violet-300">$99</span>
-                        <span className="text-sm text-muted-foreground">/ month</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">Unlimited AI fixes + priority generation</p>
-                      <button className="mt-3 w-full py-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 text-white text-xs font-bold hover:opacity-90 transition-opacity">
-                        Upgrade to Pro
-                      </button>
-                    </div>
-                  </div>
-                  <button onClick={() => setShowUpgrade(false)} className="text-xs text-muted-foreground hover:underline">
-                    Maybe later
+                  <button
+                    onClick={() => setShowUpgrade(true)}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white text-sm font-bold hover:opacity-90 transition-opacity"
+                  >
+                    View Plans
                   </button>
+                  <button onClick={() => setShowUpgrade(false)} className="text-xs text-muted-foreground hover:underline">Maybe later</button>
                 </div>
               ) : (
                 /* Generate CTA */
@@ -716,6 +695,13 @@ export function ComparisonView({ auditId, findingStatus, verificationStatus, onV
             Evidence trail preserved · Original violation screenshot retained for SOC 2 / audit history · {new Date().toLocaleDateString("en-US", { dateStyle: "long" })}
           </p>
         </div>
+      )}
+
+      {showUpgrade && (
+        <UpgradeModal
+          onClose={() => setShowUpgrade(false)}
+          onSuccess={() => { setShowUpgrade(false); setCredits(5); }}
+        />
       )}
     </div>
   );
