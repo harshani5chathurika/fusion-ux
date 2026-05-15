@@ -13,6 +13,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://fusion-ux-six.vercel.app"),
   title: {
     default: "Fusion UX — AI-Powered UX Audit Platform",
     template: "%s | Fusion UX",
