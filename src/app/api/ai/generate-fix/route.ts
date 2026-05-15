@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     // Step 1: Gemini analyzes the violation → spec + image prompt
     const visionModel = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model: "gemini-1.5-flash",
       generationConfig: { responseMimeType: "application/json" } as never,
     });
 
