@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const dynamic = "force-dynamic";
@@ -51,13 +52,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { finding_id, audit_id, screenshot_url, finding } = body;
 
-    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
-
-    // Step 1: Gemini analyzes the violation → spec + image prompt
-    const visionModel = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash-latest",
-      generationConfig: { responseMimeType: "application/json" } as never,
-    });
+    // Step 1: Claude analyzes the violation → spec + image prompt
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
     const analysisPrompt = `You are a senior UX designer. Analyze this UI screenshot and the heuristic violation below, then generate a precise visual fix specification.
 
@@ -73,33 +69,46 @@ Return a JSON object with these exact keys:
   "specification": "A 2-3 sentence description of what the fixed UI looks like — colors, layout, spacing, typography",
   "dalle_prompt": "A UI mockup prompt (max 150 words) starting with 'Clean modern UI mockup,' describing the FIXED interface. Be specific about the exact visual elements that resolve the violation.",
   "figma_prompt": "A Figma AI / FigJam prompt a designer can paste directly. Include component names, variant properties, spacing values, and color tokens."
-}`;
+}
+
+Return valid JSON only. No markdown, no prose outside JSON.`;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const parts: any[] = [];
+    const claudeContent: any[] = [];
 
     if (screenshot_url) {
       const imgRes = await fetch(screenshot_url as string);
       const imgBuf = await imgRes.arrayBuffer();
       const imgBase64 = Buffer.from(imgBuf).toString("base64");
-      const mimeType = imgRes.headers.get("content-type") ?? "image/png";
-      parts.push({ inlineData: { mimeType, data: imgBase64 } });
+      const ct = imgRes.headers.get("content-type") ?? "image/png";
+      const mediaType = ct.includes("jpeg") || ct.includes("jpg") ? "image/jpeg"
+        : ct.includes("webp") ? "image/webp"
+        : "image/png";
+      claudeContent.push({
+        type: "image",
+        source: { type: "base64", media_type: mediaType, data: imgBase64 },
+      });
     }
-    parts.push({ text: analysisPrompt });
+    claudeContent.push({ type: "text", text: analysisPrompt });
 
-    const specResponse = await visionModel.generateContent({
-      contents: [{ role: "user", parts }],
+    const specMessage = await anthropic.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 800,
+      messages: [{ role: "user", content: claudeContent }],
     });
 
-    const specText = specResponse.response.text() ?? "{}";
+    const specText = specMessage.content[0]?.type === "text" ? specMessage.content[0].text : "{}";
     let spec: { specification: string; dalle_prompt: string; figma_prompt: string };
     try {
-      spec = JSON.parse(specText);
+      const jsonStart = specText.indexOf("{");
+      const jsonEnd = specText.lastIndexOf("}");
+      spec = JSON.parse(jsonStart !== -1 ? specText.slice(jsonStart, jsonEnd + 1) : specText);
     } catch {
       return NextResponse.json({ error: "Failed to parse AI specification" }, { status: 500 });
     }
 
-    // Step 2: Gemini generates the fixed UI mockup
+    // Step 2: Gemini generates the fixed UI mockup image
+    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
     const imageModel = genAI.getGenerativeModel({
       model: "gemini-2.0-flash-exp-image-generation",
     });
@@ -130,14 +139,14 @@ Return a JSON object with these exact keys:
       .from("audit-screenshots")
       .getPublicUrl(storagePath);
 
-    // Step 4: Save proposed design to finding
+    // Step 3: Save proposed design to finding
     await supabase.from("findings").update({
       proposed_design_url: publicUrl,
       proposed_design_prompt: spec.figma_prompt,
       fix_generated_at: now.toISOString(),
     }).eq("id", finding_id);
 
-    // Step 5: Increment daily usage counter
+    // Step 4: Increment daily usage counter
     if (planStatus !== "pro") {
       await supabase.from("usage").upsert(
         {
