@@ -59,27 +59,19 @@ export function ComparisonView({ auditId, findingStatus, verificationStatus, onV
   const [proposedUrl, setProposedUrl] = useState<string | null>(comparingFinding?.proposed_design_url ?? null);
   const [figmaPrompt, setFigmaPrompt] = useState<string | null>(comparingFinding?.proposed_design_prompt ?? null);
   const [aiSpec, setAiSpec] = useState<string | null>(null);
-  const [credits, setCredits] = useState<number | null>(null);
-  const [orgPlan, setOrgPlan] = useState<string>("free");
+  const [remaining, setRemaining] = useState<number | null>(null);
+  const [planStatus, setPlanStatus] = useState<"free" | "pro">("free");
   const [showUpgrade, setShowUpgrade] = useState(false);
 
-  // Load credits on mount
+  // Load daily usage on mount
   useEffect(() => {
-    async function loadCredits() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase
-        .from("organization_members")
-        .select("organizations(ai_credits, plan)")
-        .eq("user_id", user.id)
-        .single();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const org = (data as any)?.organizations;
-      setCredits(org?.ai_credits ?? 0);
-      setOrgPlan(org?.plan ?? "free");
-    }
-    loadCredits();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetch("/api/usage")
+      .then((r) => r.json())
+      .then((d) => {
+        setRemaining(d.remaining ?? null);
+        setPlanStatus(d.plan_status ?? "free");
+      })
+      .catch(() => {});
   }, []);
 
   const onDrop = useCallback(async (files: File[]) => {
@@ -167,7 +159,7 @@ export function ComparisonView({ auditId, findingStatus, verificationStatus, onV
 
   async function generateAiFix() {
     if (!comparingFinding) return;
-    if (credits !== null && credits <= 0 && orgPlan !== "pro") {
+    if (planStatus !== "pro" && remaining !== null && remaining <= 0) {
       setShowUpgrade(true);
       return;
     }
@@ -202,7 +194,7 @@ export function ComparisonView({ auditId, findingStatus, verificationStatus, onV
       setProposedUrl(data.proposed_design_url);
       setFigmaPrompt(data.figma_prompt);
       setAiSpec(data.specification);
-      if (data.credits_remaining !== null) setCredits(data.credits_remaining);
+      if (data.remaining !== undefined) setRemaining(data.remaining);
       toast.success("AI design generated! ✨");
     } catch (e) {
       toast.error("Generation failed", { description: e instanceof Error ? e.message : "Unknown error" });
@@ -388,15 +380,15 @@ export function ComparisonView({ auditId, findingStatus, verificationStatus, onV
               >
                 <Wand2 className="h-3.5 w-3.5" />
                 Generate AI Fix
-                {orgPlan !== "pro" && credits !== null && (
+                {planStatus !== "pro" && remaining !== null && (
                   <span className={cn(
                     "text-[9px] font-bold px-1.5 py-0.5 rounded-full",
-                    credits > 0 ? "bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300" : "bg-red-100 dark:bg-red-900/40 text-red-600"
+                    remaining > 0 ? "bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300" : "bg-red-100 dark:bg-red-900/40 text-red-600"
                   )}>
-                    {credits} left
+                    {remaining} left today
                   </span>
                 )}
-                {orgPlan === "pro" && (
+                {planStatus === "pro" && (
                   <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300">PRO</span>
                 )}
               </button>
@@ -601,10 +593,10 @@ export function ComparisonView({ auditId, findingStatus, verificationStatus, onV
                       GPT-4o + DALL·E 3 will analyze the violation and generate a visual proposed design that resolves it
                     </p>
                   </div>
-                  {orgPlan !== "pro" && credits !== null && (
+                  {planStatus !== "pro" && remaining !== null && (
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Zap className="h-3.5 w-3.5 text-violet-500" />
-                      <span>{credits} free credit{credits !== 1 ? "s" : ""} remaining</span>
+                      <span>{remaining} fix{remaining !== 1 ? "es" : ""} remaining today</span>
                     </div>
                   )}
                   <button
@@ -700,7 +692,7 @@ export function ComparisonView({ auditId, findingStatus, verificationStatus, onV
       {showUpgrade && (
         <UpgradeModal
           onClose={() => setShowUpgrade(false)}
-          onSuccess={() => { setShowUpgrade(false); setCredits(5); }}
+          onSuccess={() => { setShowUpgrade(false); setPlanStatus("pro"); setRemaining(null); }}
         />
       )}
     </div>

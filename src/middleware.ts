@@ -38,7 +38,7 @@ export async function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
 
     const isPublicRoute = PUBLIC_ROUTES.some(
-      (route) => pathname === route || pathname.startsWith("/api/auth") || pathname.startsWith("/auth/")
+      (route) => pathname === route || pathname.startsWith("/api/auth") || pathname.startsWith("/auth/") || pathname.startsWith("/api/webhooks/")
     );
 
     if (!user && !isPublicRoute) {

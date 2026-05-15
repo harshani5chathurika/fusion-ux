@@ -1,40 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Zap } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { useEffect, useState, useCallback } from "react";
+import { Zap, Crown } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { UpgradeModal } from "./UpgradeModal";
 
-export function CreditBadge() {
-  const [credits, setCredits] = useState<number | null>(null);
-  const [plan, setPlan] = useState<string>("free");
-  const [showUpgrade, setShowUpgrade] = useState(false);
-  const supabase = createClient();
+interface UsageData {
+  fixes_today: number;
+  plan_status: "free" | "pro";
+  remaining: number | null;
+  limit: number;
+}
 
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase
-        .from("organization_members")
-        .select("organizations(ai_credits, plan)")
-        .eq("user_id", user.id)
-        .single();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const org = (data as any)?.organizations;
-      setCredits(org?.ai_credits ?? 0);
-      setPlan(org?.plan ?? "free");
-    }
-    load();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+export function CreditBadge() {
+  const [usage, setUsage] = useState<UsageData | null>(null);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch("/api/usage");
+      if (res.ok) setUsage(await res.json());
+    } catch { /* silent */ }
   }, []);
 
-  if (plan === "pro") {
+  useEffect(() => { load(); }, [load]);
+
+  if (!usage) return null;
+
+  // Pro plan badge
+  if (usage.plan_status === "pro") {
     return (
       <div className="rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 px-3 py-2 flex items-center gap-2">
-        <Zap className="h-3.5 w-3.5 text-white flex-shrink-0" />
-        <div className="flex-1 min-w-0">
+        <Crown className="h-3.5 w-3.5 text-white flex-shrink-0" />
+        <div>
           <p className="text-[11px] font-bold text-white">Pro Plan</p>
           <p className="text-[10px] text-violet-200">Unlimited AI fixes</p>
         </div>
@@ -42,71 +40,69 @@ export function CreditBadge() {
     );
   }
 
-  if (credits === null) return null;
-
-  const isEmpty = credits <= 0;
-  const isLow = credits > 0 && credits <= 2;
+  const used = usage.fixes_today;
+  const limit = usage.limit;
+  const isAtLimit = used >= limit;
+  const isNearLimit = used === limit - 1;
 
   return (
     <>
-    <div className={cn(
-      "rounded-lg border px-3 py-2 space-y-1.5",
-      isEmpty
-        ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800"
-        : isLow
-        ? "bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800"
-        : "bg-violet-50 dark:bg-violet-950/30 border-violet-200 dark:border-violet-800"
-    )}>
-      <div className="flex items-center gap-2">
-        <Zap className={cn(
-          "h-3.5 w-3.5 flex-shrink-0",
-          isEmpty ? "text-red-500" : isLow ? "text-orange-500" : "text-violet-500"
-        )} />
-        <p className={cn(
-          "text-[11px] font-bold",
-          isEmpty ? "text-red-700 dark:text-red-300" : isLow ? "text-orange-700 dark:text-orange-300" : "text-violet-700 dark:text-violet-300"
-        )}>
-          AI Fix Credits
+      <div className={cn(
+        "rounded-lg border px-3 py-2 space-y-1.5",
+        isAtLimit
+          ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800"
+          : isNearLimit
+          ? "bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800"
+          : "bg-violet-50 dark:bg-violet-950/30 border-violet-200 dark:border-violet-800"
+      )}>
+        <div className="flex items-center gap-2">
+          <Zap className={cn(
+            "h-3.5 w-3.5 flex-shrink-0",
+            isAtLimit ? "text-red-500" : isNearLimit ? "text-orange-500" : "text-violet-500"
+          )} />
+          <p className={cn(
+            "text-[11px] font-bold",
+            isAtLimit ? "text-red-700 dark:text-red-300"
+              : isNearLimit ? "text-orange-700 dark:text-orange-300"
+              : "text-violet-700 dark:text-violet-300"
+          )}>
+            Free: {used}/{limit} fixes today
+          </p>
+        </div>
+
+        {/* Progress bar */}
+        <div className="h-1 bg-muted rounded-full overflow-hidden">
+          <div
+            className={cn(
+              "h-full rounded-full transition-all",
+              isAtLimit ? "bg-red-500" : isNearLimit ? "bg-orange-500" : "bg-violet-500"
+            )}
+            style={{ width: `${Math.min(100, (used / limit) * 100)}%` }}
+          />
+        </div>
+
+        <p className="text-[10px] text-muted-foreground">
+          {isAtLimit ? "Daily limit reached — " : isNearLimit ? "Last fix today — " : "Resets every 24h · "}
+          <button
+            onClick={() => setShowUpgrade(true)}
+            className={cn(
+              "font-semibold underline",
+              isAtLimit ? "text-red-600 dark:text-red-400"
+                : isNearLimit ? "text-orange-600 dark:text-orange-400"
+                : "text-violet-600 dark:text-violet-400"
+            )}
+          >
+            Upgrade to Pro
+          </button>
         </p>
-        <span className={cn(
-          "ml-auto text-[11px] font-bold px-1.5 py-0.5 rounded-full",
-          isEmpty ? "bg-red-500 text-white" : isLow ? "bg-orange-500 text-white" : "bg-violet-500 text-white"
-        )}>
-          {credits}
-        </span>
       </div>
 
-      {/* Progress bar */}
-      <div className="h-1 bg-muted rounded-full overflow-hidden">
-        <div
-          className={cn(
-            "h-full rounded-full transition-all",
-            isEmpty ? "bg-red-500" : isLow ? "bg-orange-500" : "bg-violet-500"
-          )}
-          style={{ width: `${Math.min(100, (credits / 3) * 100)}%` }}
+      {showUpgrade && (
+        <UpgradeModal
+          onClose={() => setShowUpgrade(false)}
+          onSuccess={() => { setShowUpgrade(false); load(); }}
         />
-      </div>
-
-      <p className="text-[10px] text-muted-foreground">
-        {isEmpty ? "No credits left — " : isLow ? "Almost out — " : "Free tier · "}
-        <button
-          onClick={() => setShowUpgrade(true)}
-          className={cn(
-            "font-semibold underline",
-            isEmpty ? "text-red-600 dark:text-red-400" : isLow ? "text-orange-600 dark:text-orange-400" : "text-violet-600 dark:text-violet-400"
-          )}
-        >
-          Upgrade to Pro
-        </button>
-      </p>
-    </div>
-
-    {showUpgrade && (
-      <UpgradeModal
-        onClose={() => setShowUpgrade(false)}
-        onSuccess={() => { setShowUpgrade(false); window.location.reload(); }}
-      />
-    )}
+      )}
     </>
   );
 }

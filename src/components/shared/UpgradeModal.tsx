@@ -1,19 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Zap, Check, CreditCard, Loader2, Lock, ShieldCheck } from "lucide-react";
-import {
-  PayPalScriptProvider,
-  PayPalButtons,
-  PayPalHostedFieldsProvider,
-  PayPalHostedField,
-  usePayPalHostedFields,
-} from "@paypal/react-paypal-js";
+import { X, Zap, Check, Loader2, Crown, AlertCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
 
-type Plan = "credits_10" | "pro_monthly" | "pro_yearly";
-type PayMethod = "card" | "paypal";
 type Billing = "monthly" | "yearly";
 
 interface UpgradeModalProps {
@@ -21,7 +12,17 @@ interface UpgradeModalProps {
   onSuccess?: () => void;
 }
 
-// ── Card brand icons ─────────────────────────────────────────────
+declare global {
+  interface Window {
+    createLemonSqueezy?: () => void;
+    LemonSqueezy?: {
+      Setup: (config: { eventHandler: (event: { event: string }) => void }) => void;
+      Url: { Open: (url: string) => void };
+    };
+  }
+}
+
+// ── Trust badge icons ─────────────────────────────────────────────
 function VisaIcon() {
   return (
     <svg viewBox="0 0 48 16" className="h-4 w-auto" fill="none">
@@ -40,153 +41,140 @@ function MastercardIcon() {
 }
 function AmexIcon() {
   return (
-    <svg viewBox="0 0 40 24" className="h-4 w-auto" fill="none">
-      <rect width="40" height="24" rx="3" fill="#016FD0" />
+    <svg viewBox="0 0 42 24" className="h-4 w-auto" fill="none">
+      <rect width="42" height="24" rx="3" fill="#016FD0" />
       <text x="4" y="17" fontFamily="Arial" fontWeight="bold" fontSize="9" fill="white">AMEX</text>
     </svg>
   );
 }
-
-// ── Card submit (must live inside PayPalHostedFieldsProvider) ────
-function CardSubmitButton({ onSuccess, onError, plan, amount, cardholderName }: {
-  onSuccess: () => void;
-  onError: () => void;
-  plan: Plan;
-  amount: string;
-  cardholderName: string;
-}) {
-  const hostedFields = usePayPalHostedFields();
-  const [submitting, setSubmitting] = useState(false);
-
-  async function handlePay() {
-    if (!hostedFields?.cardFields) return;
-    setSubmitting(true);
-    try {
-      const order = await hostedFields.cardFields.submit({ cardholderName });
-      const res = await fetch("/api/billing/paypal-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "capture", order_id: order.orderId, plan }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success("Payment successful!");
-        onSuccess();
-      } else throw new Error("Capture failed");
-    } catch {
-      onError();
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
+function ApplePayIcon() {
   return (
-    <button
-      onClick={handlePay}
-      disabled={submitting}
-      className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold text-sm hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-violet-500/25"
-    >
-      {submitting
-        ? <><Loader2 className="h-4 w-4 animate-spin" />Processing…</>
-        : <><Lock className="h-4 w-4" />Pay {amount} Securely</>
-      }
-    </button>
+    <svg viewBox="0 0 54 24" className="h-5 w-auto" fill="none">
+      <rect width="54" height="24" rx="4" fill="#000" />
+      <text x="6" y="17" fontFamily="-apple-system,system-ui" fontWeight="600" fontSize="10" fill="white"> Pay</text>
+    </svg>
+  );
+}
+function GooglePayIcon() {
+  return (
+    <svg viewBox="0 0 60 24" className="h-5 w-auto" fill="none">
+      <rect width="60" height="24" rx="4" fill="white" stroke="#E0E0E0" strokeWidth="1" />
+      <text x="6" y="16" fontFamily="Arial" fontWeight="500" fontSize="9">
+        <tspan fill="#4285F4">G</tspan>
+        <tspan fill="#EA4335">o</tspan>
+        <tspan fill="#FBBC05">o</tspan>
+        <tspan fill="#4285F4">g</tspan>
+        <tspan fill="#34A853">l</tspan>
+        <tspan fill="#EA4335">e</tspan>
+        <tspan fill="#555" dx="1">Pay</tspan>
+      </text>
+    </svg>
+  );
+}
+function PayPalIcon() {
+  return (
+    <svg viewBox="0 0 54 24" className="h-5 w-auto" fill="none">
+      <rect width="54" height="24" rx="4" fill="#F5F7FA" stroke="#E0E0E0" strokeWidth="1" />
+      <text x="8" y="16" fontFamily="Arial" fontWeight="bold" fontSize="10">
+        <tspan fill="#003087">Pay</tspan><tspan fill="#009cde">Pal</tspan>
+      </text>
+    </svg>
   );
 }
 
-const HOSTED_FIELD_STYLES = {
-  input: { "font-size": "14px", "font-family": "inherit", color: "inherit" },
-};
+// ── Confetti ──────────────────────────────────────────────────────
+async function fireConfetti() {
+  try {
+    const { default: confetti } = await import("canvas-confetti");
+    confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 }, colors: ["#7c3aed", "#a855f7", "#c084fc", "#ffffff", "#f3e8ff"] });
+    setTimeout(() => confetti({ particleCount: 60, spread: 100, origin: { y: 0.65 } }), 350);
+  } catch { /* silently ignore */ }
+}
 
-// ── Plan data ────────────────────────────────────────────────────
-const CREDITS_PLAN = {
-  id: "credits_10" as Plan,
-  name: "10 AI Designs",
-  price: "$10",
-  per: "one-time",
-  badge: null as string | null,
-  yearlyNote: null as string | null,
-  features: ["10 AI-generated design fixes", "Download as PNG", "Figma AI prompt export", "No expiry"],
-};
-
-const PRO_MONTHLY = {
-  id: "pro_monthly" as Plan,
-  name: "Unlimited Pro",
-  price: "$25",
-  per: "/ month",
-  badge: "BEST VALUE" as string | null,
-  yearlyNote: null as string | null,
-  features: ["Unlimited AI design fixes", "Priority generation", "All export formats", "Cancel anytime"],
-};
-
-const PRO_YEARLY = {
-  id: "pro_yearly" as Plan,
-  name: "Unlimited Pro",
-  price: "$20",
-  per: "/ month",
-  badge: "SAVE $60" as string | null,
-  yearlyNote: "billed $240 / year",
-  features: ["Unlimited AI design fixes", "Priority generation", "All export formats", "2 months free"],
-};
-
-// ── Main modal ───────────────────────────────────────────────────
+// ── Main modal ────────────────────────────────────────────────────
 export function UpgradeModal({ onClose, onSuccess }: UpgradeModalProps) {
   const [billing, setBilling] = useState<Billing>("monthly");
-  const [selectedPlan, setSelectedPlan] = useState<Plan>("credits_10");
-  const [payMethod, setPayMethod] = useState<PayMethod>("card");
-  const [cardholderName, setCardholderName] = useState("");
-  const [clientToken, setClientToken] = useState<string | null>(null);
-  const [tokenLoading, setTokenLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
-  // Sync plan when billing toggle changes
+  // Load Lemon Squeezy overlay script on mount
   useEffect(() => {
-    if (selectedPlan === "pro_monthly" && billing === "yearly") setSelectedPlan("pro_yearly");
-    if (selectedPlan === "pro_yearly" && billing === "monthly") setSelectedPlan("pro_monthly");
-  }, [billing, selectedPlan]);
+    if (typeof window === "undefined") return;
+    if (window.LemonSqueezy) return;
 
-  // Fetch PayPal client token for hosted card fields
-  useEffect(() => {
-    if (payMethod !== "card") return;
-    setTokenLoading(true);
-    setClientToken(null);
-    fetch("/api/billing/paypal-client-token")
-      .then((r) => r.json())
-      .then((d) => { if (d.client_token) setClientToken(d.client_token); })
-      .catch(() => {})
-      .finally(() => setTokenLoading(false));
-  }, [payMethod]);
+    const existing = document.querySelector('script[src*="lemon.js"]');
+    if (existing) {
+      existing.addEventListener("load", () => window.createLemonSqueezy?.());
+      return;
+    }
+    const s = document.createElement("script");
+    s.src = "https://app.lemonsqueezy.com/js/lemon.js";
+    s.defer = true;
+    s.onload = () => window.createLemonSqueezy?.();
+    document.head.appendChild(s);
+  }, []);
 
-  const plans = [CREDITS_PLAN, billing === "yearly" ? PRO_YEARLY : PRO_MONTHLY];
-  const activePlan = plans.find((p) => p.id === selectedPlan) ?? plans[0];
-  const chargeAmount = activePlan.id === "credits_10" ? "$10" : billing === "yearly" ? "$240" : "$25";
+  async function handleSubscribe() {
+    setLoading(true);
+    setCheckoutError(null);
+    try {
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ billing }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) throw new Error(data.error ?? "Failed to create checkout");
 
-  async function createOrder() {
-    const res = await fetch("/api/billing/paypal-order", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "create", plan: selectedPlan }),
-    });
-    const data = await res.json();
-    return data.id as string;
+      window.LemonSqueezy?.Setup({
+        eventHandler: (e) => {
+          if (e.event === "Checkout.Success") {
+            setSuccess(true);
+            fireConfetti();
+            onSuccess?.();
+          }
+        },
+      });
+      window.LemonSqueezy?.Url.Open(data.url);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Something went wrong";
+      setCheckoutError(msg);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  async function captureOrder(orderId: string) {
-    const res = await fetch("/api/billing/paypal-order", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "capture", order_id: orderId, plan: selectedPlan }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      toast.success("Payment successful!");
-      onSuccess?.();
-      onClose();
-    } else throw new Error("Capture failed");
+  // ── Success screen ────────────────────────────────────────────
+  if (success) {
+    return (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="bg-background rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center space-y-6">
+          <div className="w-24 h-24 bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/40 dark:to-purple-900/40 rounded-full flex items-center justify-center mx-auto animate-bounce-slow">
+            <Crown className="h-12 w-12 text-violet-600" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold">Welcome to Pro! 🎉</h2>
+            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+              Unlimited AI design fixes are now unlocked. The Generate AI Fix button is always active.
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold text-sm hover:opacity-90 transition-opacity"
+          >
+            Back to Fusion UX →
+          </button>
+        </div>
+      </div>
+    );
   }
 
+  // ── Upgrade modal ────────────────────────────────────────────
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-background rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto">
+      <div className="bg-background rounded-2xl shadow-2xl w-full max-w-md">
 
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-border">
@@ -195,8 +183,8 @@ export function UpgradeModal({ onClose, onSuccess }: UpgradeModalProps) {
               <Zap className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h2 className="font-bold text-base">Upgrade Fusion UX</h2>
-              <p className="text-xs text-muted-foreground">Get more AI-powered design fixes</p>
+              <h2 className="font-bold text-base">Upgrade to Pro</h2>
+              <p className="text-xs text-muted-foreground">Unlimited AI-powered design fixes</p>
             </div>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-accent flex items-center justify-center text-muted-foreground">
@@ -212,8 +200,8 @@ export function UpgradeModal({ onClose, onSuccess }: UpgradeModalProps) {
               <button
                 onClick={() => setBilling("monthly")}
                 className={cn(
-                  "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all",
-                  billing === "monthly" ? "bg-background shadow text-foreground" : "text-muted-foreground"
+                  "px-5 py-1.5 rounded-lg text-xs font-semibold transition-all",
+                  billing === "monthly" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 Monthly
@@ -221,229 +209,99 @@ export function UpgradeModal({ onClose, onSuccess }: UpgradeModalProps) {
               <button
                 onClick={() => setBilling("yearly")}
                 className={cn(
-                  "flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all",
-                  billing === "yearly" ? "bg-background shadow text-foreground" : "text-muted-foreground"
+                  "flex items-center gap-1.5 px-5 py-1.5 rounded-lg text-xs font-semibold transition-all",
+                  billing === "yearly" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 Yearly
                 <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400">
-                  SAVE 20%
+                  SAVE $60
                 </span>
               </button>
             </div>
           </div>
 
-          {/* Plan selector */}
-          <div className="grid grid-cols-2 gap-3">
-            {plans.map((plan) => (
-              <button
-                key={plan.id}
-                onClick={() => setSelectedPlan(plan.id)}
-                className={cn(
-                  "relative rounded-xl border-2 p-4 text-left transition-all",
-                  selectedPlan === plan.id
-                    ? "border-violet-500 bg-violet-50 dark:bg-violet-950/30"
-                    : "border-border hover:border-violet-300 dark:hover:border-violet-700"
-                )}
-              >
-                {plan.badge && (
-                  <span className="absolute top-2.5 right-2.5 text-[9px] font-bold px-2 py-0.5 bg-violet-500 text-white rounded-full">
-                    {plan.badge}
-                  </span>
-                )}
-                {selectedPlan === plan.id && (
-                  <div className="absolute top-2.5 left-2.5 w-4 h-4 rounded-full bg-violet-500 flex items-center justify-center">
-                    <Check className="h-2.5 w-2.5 text-white" />
-                  </div>
-                )}
-                <p className="font-semibold text-sm mt-1">{plan.name}</p>
-                <div className="flex items-baseline gap-1 mt-1">
-                  <span className="text-2xl font-bold text-violet-600 dark:text-violet-400">{plan.price}</span>
-                  <span className="text-xs text-muted-foreground">{plan.per}</span>
-                </div>
-                {plan.yearlyNote && (
-                  <p className="text-[10px] text-muted-foreground mt-0.5">{plan.yearlyNote}</p>
-                )}
-                <ul className="mt-3 space-y-1.5">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Check className="h-3 w-3 text-violet-500 flex-shrink-0" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-              </button>
-            ))}
-          </div>
-
-          {/* Order summary */}
-          <div className="rounded-xl border border-border bg-muted/30 px-4 py-3 flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">{activePlan.name}</span>
-            <span className="font-bold">
-              {chargeAmount}{" "}
-              <span className="text-muted-foreground font-normal text-xs">
-                {activePlan.id === "credits_10" ? "one-time" : billing === "yearly" ? "/ year" : "/ month"}
+          {/* Plan card */}
+          <div className="rounded-2xl border-2 border-violet-500 bg-violet-50 dark:bg-violet-950/30 p-5">
+            <div className="flex items-start justify-between mb-1">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">
+                Unlimited Pro
+              </p>
+              <span className="text-[9px] font-bold px-2 py-0.5 bg-violet-500 text-white rounded-full">
+                {billing === "yearly" ? "SAVE $60/YR" : "BEST VALUE"}
               </span>
-            </span>
+            </div>
+
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-4xl font-extrabold tracking-tight">
+                {billing === "yearly" ? "$20" : "$25"}
+              </span>
+              <span className="text-sm text-muted-foreground">/ month</span>
+            </div>
+            {billing === "yearly" && (
+              <p className="text-xs text-muted-foreground mt-0.5">billed $240 / year · save $60</p>
+            )}
+
+            <ul className="mt-4 space-y-2">
+              {[
+                "Unlimited AI design fixes per day",
+                "Apple Pay & Google Pay accepted",
+                "3D Secure & OTP protection",
+                "Priority DALL·E 3 generation",
+                "All export formats (PNG, Figma)",
+                "Advanced analytics dashboard",
+              ].map((f) => (
+                <li key={f} className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Check className="h-3.5 w-3.5 text-violet-500 flex-shrink-0" />
+                  {f}
+                </li>
+              ))}
+            </ul>
           </div>
 
-          {/* Payment method tabs */}
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Payment Method</p>
-            <div className="flex gap-2">
+          {/* Error state */}
+          {checkoutError && (
+            <div className="flex items-start gap-2.5 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 p-3">
+              <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-red-700 dark:text-red-300">Checkout failed</p>
+                <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">{checkoutError}</p>
+              </div>
               <button
-                onClick={() => setPayMethod("card")}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all flex-1 justify-center",
-                  payMethod === "card"
-                    ? "border-violet-500 bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300"
-                    : "border-border hover:border-violet-300 text-muted-foreground"
-                )}
+                onClick={handleSubscribe}
+                className="flex items-center gap-1 text-xs font-semibold text-red-700 dark:text-red-300 hover:underline flex-shrink-0"
               >
-                <CreditCard className="h-4 w-4" />
-                Card
-                <div className="flex items-center gap-1">
-                  <VisaIcon /><MastercardIcon />
-                </div>
-              </button>
-              <button
-                onClick={() => setPayMethod("paypal")}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all flex-1 justify-center",
-                  payMethod === "paypal"
-                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
-                    : "border-border hover:border-blue-300 text-muted-foreground"
-                )}
-              >
-                <span className="font-bold text-[#003087] dark:text-[#009cde]">Pay</span>
-                <span className="font-bold text-[#009cde] -ml-1.5">Pal</span>
+                <RefreshCw className="h-3 w-3" />Retry
               </button>
             </div>
+          )}
+
+          {/* Subscribe button */}
+          <button
+            onClick={handleSubscribe}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold text-sm hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-violet-500/25"
+          >
+            {loading
+              ? <><Loader2 className="h-4 w-4 animate-spin" />Opening secure checkout…</>
+              : <><Crown className="h-4 w-4" />Subscribe — {billing === "yearly" ? "$240 / year" : "$25 / month"}</>
+            }
+          </button>
+
+          {/* Trust footer */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-center gap-2 flex-wrap">
+              <ApplePayIcon />
+              <GooglePayIcon />
+              <PayPalIcon />
+              <MastercardIcon />
+              <VisaIcon />
+              <AmexIcon />
+            </div>
+            <p className="text-[11px] text-center text-muted-foreground">
+              🔒 Secured by Lemon Squeezy · Global USD payments · 3D Secure enabled
+            </p>
           </div>
-
-          {/* ── Card payment ── */}
-          {payMethod === "card" && (
-            tokenLoading ? (
-              <div className="flex items-center justify-center py-8 gap-2 text-muted-foreground text-sm">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Loading secure payment form…
-              </div>
-            ) : !clientToken ? (
-              <div className="rounded-xl border border-border bg-muted/30 p-4 text-center text-sm text-muted-foreground">
-                Card payment unavailable — PayPal credentials not configured.
-              </div>
-            ) : (
-              <PayPalScriptProvider options={{
-                clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? "",
-                dataClientToken: clientToken,
-                currency: "USD",
-                components: "hosted-fields",
-                intent: "capture",
-              }}>
-                <PayPalHostedFieldsProvider createOrder={createOrder} styles={HOSTED_FIELD_STYLES}>
-                  <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-4">
-
-                    {/* Secure header */}
-                    <div className="flex items-center justify-between pb-2 border-b border-border">
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-                        <Lock className="h-3.5 w-3.5" />
-                        Secure Payment Info
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <MastercardIcon /><VisaIcon /><AmexIcon />
-                      </div>
-                    </div>
-
-                    {/* Name on card */}
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Name (as it appears on your card)
-                      </label>
-                      <input
-                        type="text"
-                        value={cardholderName}
-                        onChange={(e) => setCardholderName(e.target.value)}
-                        placeholder="John Smith"
-                        className="w-full px-3 py-2.5 rounded-xl border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground/50"
-                      />
-                    </div>
-
-                    {/* Card number */}
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Card number (no dashes or spaces)
-                      </label>
-                      <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring">
-                        <CreditCard className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                        <div className="flex-1 h-5">
-                          <PayPalHostedField
-                            id="card-number"
-                            hostedFieldType="number"
-                            className="w-full h-full outline-none bg-transparent text-sm"
-                            options={{ selector: "#card-number", placeholder: "1234567890123456" }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Expiry + CVV */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-muted-foreground">Expiration date</label>
-                        <div className="px-3 py-2.5 rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring h-11">
-                          <PayPalHostedField
-                            id="expiration-date"
-                            hostedFieldType="expirationDate"
-                            className="w-full h-full outline-none bg-transparent text-sm"
-                            options={{ selector: "#expiration-date", placeholder: "MM / YY" }}
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-muted-foreground">Security code (3 on back)</label>
-                        <div className="px-3 py-2.5 rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring h-11">
-                          <PayPalHostedField
-                            id="cvv"
-                            hostedFieldType="cvv"
-                            className="w-full h-full outline-none bg-transparent text-sm"
-                            options={{ selector: "#cvv", placeholder: "CVV" }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <CardSubmitButton
-                      plan={selectedPlan}
-                      amount={chargeAmount}
-                      cardholderName={cardholderName}
-                      onSuccess={() => { onSuccess?.(); onClose(); }}
-                      onError={() => toast.error("Payment failed. Please check your card details.")}
-                    />
-
-                    <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1.5">
-                      <ShieldCheck className="h-3.5 w-3.5 text-green-500" />
-                      Secured by PayPal · Visa, Mastercard, Amex & Debit accepted
-                    </p>
-                  </div>
-                </PayPalHostedFieldsProvider>
-              </PayPalScriptProvider>
-            )
-          )}
-
-          {/* ── PayPal buttons ── */}
-          {payMethod === "paypal" && (
-            <PayPalScriptProvider options={{
-              clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? "",
-              currency: "USD",
-            }}>
-              <PayPalButtons
-                style={{ layout: "vertical", color: "blue", shape: "rect", label: "pay" }}
-                createOrder={createOrder}
-                onApprove={async (data) => { await captureOrder(data.orderID); }}
-                onError={() => toast.error("PayPal payment failed. Please try again.")}
-              />
-            </PayPalScriptProvider>
-          )}
 
         </div>
       </div>
