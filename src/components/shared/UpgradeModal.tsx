@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { X, CreditCard, Zap, Check, Loader2, Building2, ExternalLink } from "lucide-react";
+import { X, Zap, Check, Building2, ExternalLink, Globe } from "lucide-react";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
 
 type Plan = "credits_5" | "pro_monthly";
-type PayMethod = "card" | "paypal" | "bank";
+type PayMethod = "paypal" | "bank";
 
 interface UpgradeModalProps {
   onClose: () => void;
@@ -44,30 +44,8 @@ const BANK_DETAILS = {
 
 export function UpgradeModal({ onClose, onSuccess }: UpgradeModalProps) {
   const [selectedPlan, setSelectedPlan] = useState<Plan>("credits_5");
-  const [payMethod, setPayMethod] = useState<PayMethod>("card");
-  const [isLoadingStripe, setIsLoadingStripe] = useState(false);
+  const [payMethod, setPayMethod] = useState<PayMethod>("paypal");
   const [copied, setCopied] = useState(false);
-
-  async function handleStripeCheckout() {
-    setIsLoadingStripe(true);
-    try {
-      const res = await fetch("/api/billing/create-checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: selectedPlan }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error(data.error ?? "Checkout failed");
-      }
-    } catch (e) {
-      toast.error("Payment failed", { description: e instanceof Error ? e.message : "Unknown error" });
-    } finally {
-      setIsLoadingStripe(false);
-    }
-  }
 
   async function handlePayPalCapture(orderId: string) {
     const res = await fetch("/api/billing/paypal-order", {
@@ -133,6 +111,11 @@ export function UpgradeModal({ onClose, onSuccess }: UpgradeModalProps) {
                     {plan.badge}
                   </span>
                 )}
+                {selectedPlan === plan.id && (
+                  <div className="absolute top-2.5 left-2.5 w-4 h-4 rounded-full bg-violet-500 flex items-center justify-center">
+                    <Check className="h-2.5 w-2.5 text-white" />
+                  </div>
+                )}
                 <p className="font-semibold text-sm">{plan.name}</p>
                 <div className="flex items-baseline gap-1 mt-1">
                   <span className="text-2xl font-bold text-violet-600 dark:text-violet-400">{plan.price}</span>
@@ -146,11 +129,6 @@ export function UpgradeModal({ onClose, onSuccess }: UpgradeModalProps) {
                     </li>
                   ))}
                 </ul>
-                {selectedPlan === plan.id && (
-                  <div className="absolute top-2.5 left-2.5 w-4 h-4 rounded-full bg-violet-500 flex items-center justify-center">
-                    <Check className="h-2.5 w-2.5 text-white" />
-                  </div>
-                )}
               </button>
             ))}
           </div>
@@ -159,68 +137,48 @@ export function UpgradeModal({ onClose, onSuccess }: UpgradeModalProps) {
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Payment Method</p>
             <div className="flex gap-2">
-              {[
-                { id: "card" as PayMethod, label: "Card", icon: CreditCard },
-                { id: "paypal" as PayMethod, label: "PayPal", icon: null },
-                { id: "bank" as PayMethod, label: "Bank Transfer", icon: Building2 },
-              ].map(({ id, label, icon: Icon }) => (
-                <button
-                  key={id}
-                  onClick={() => setPayMethod(id)}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all",
-                    payMethod === id
-                      ? "border-violet-500 bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300"
-                      : "border-border hover:border-violet-300 text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {Icon && <Icon className="h-4 w-4" />}
-                  {id === "paypal" && (
-                    <span className="font-bold text-[#003087] dark:text-[#009cde]">Pay<span className="text-[#009cde]">Pal</span></span>
-                  )}
-                  {id !== "paypal" && label}
-                </button>
-              ))}
+              <button
+                onClick={() => setPayMethod("paypal")}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all",
+                  payMethod === "paypal"
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
+                    : "border-border hover:border-blue-300 text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Globe className="h-4 w-4 text-[#009cde]" />
+                <span>
+                  <span className="font-bold text-[#003087] dark:text-[#009cde]">Pay</span>
+                  <span className="font-bold text-[#009cde]">Pal</span>
+                </span>
+                <span className="text-[10px] text-muted-foreground">(cards accepted)</span>
+              </button>
+              <button
+                onClick={() => setPayMethod("bank")}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all",
+                  payMethod === "bank"
+                    ? "border-violet-500 bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300"
+                    : "border-border hover:border-violet-300 text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Building2 className="h-4 w-4" />
+                Bank Transfer
+              </button>
             </div>
           </div>
 
-          {/* Card payment */}
-          {payMethod === "card" && (
-            <div className="space-y-4">
-              <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2">
+          {/* PayPal */}
+          {payMethod === "paypal" && (
+            <div className="space-y-3">
+              <div className="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20 p-3">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">{selectedPrice?.name}</span>
                   <span className="font-bold">{selectedPrice?.price} {selectedPrice?.per}</span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <CreditCard className="h-3.5 w-3.5" />
-                  Secured by Stripe · Visa, Mastercard, Amex accepted
-                </div>
-              </div>
-              <button
-                onClick={handleStripeCheckout}
-                disabled={isLoadingStripe}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-60"
-              >
-                {isLoadingStripe
-                  ? <><Loader2 className="h-4 w-4 animate-spin" />Redirecting to Stripe…</>
-                  : <><CreditCard className="h-4 w-4" />Pay {selectedPrice?.price} with Card</>
-                }
-              </button>
-              <p className="text-xs text-center text-muted-foreground">
-                You&apos;ll be redirected to Stripe&apos;s secure checkout
-              </p>
-            </div>
-          )}
-
-          {/* PayPal */}
-          {payMethod === "paypal" && (
-            <div className="space-y-4">
-              <div className="rounded-xl border border-border bg-muted/30 p-4 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">{selectedPrice?.name}</span>
-                  <span className="font-bold">{selectedPrice?.price} {selectedPrice?.per}</span>
-                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Pay with PayPal or debit/credit card — no PayPal account required for card payments
+                </p>
               </div>
               <PayPalScriptProvider options={{
                 clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? "test",
@@ -252,13 +210,13 @@ export function UpgradeModal({ onClose, onSuccess }: UpgradeModalProps) {
               <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4">
                 <p className="text-xs font-bold text-amber-700 dark:text-amber-300 mb-1">Manual bank transfer</p>
                 <p className="text-xs text-amber-700/80 dark:text-amber-300/80">
-                  Transfer the amount below to our bank account, then email your receipt to{" "}
+                  Transfer to our bank account and email your receipt to{" "}
                   <a href="mailto:billing@fusionux.app" className="font-semibold underline">billing@fusionux.app</a>.
                   Credits will be added within 1–2 business days.
                 </p>
               </div>
 
-              <div className="rounded-xl border border-border divide-y divide-border text-sm">
+              <div className="rounded-xl border border-border divide-y divide-border text-sm overflow-hidden">
                 {[
                   { label: "Bank", value: BANK_DETAILS.bankName },
                   { label: "Account Name", value: BANK_DETAILS.accountName },
@@ -286,7 +244,7 @@ export function UpgradeModal({ onClose, onSuccess }: UpgradeModalProps) {
               </button>
 
               <p className="text-xs text-center text-muted-foreground">
-                Include reference <span className="font-mono font-bold">{BANK_DETAILS.reference}</span> in your transfer description
+                Include reference <span className="font-mono font-bold">{BANK_DETAILS.reference}</span> in your transfer
               </p>
             </div>
           )}
