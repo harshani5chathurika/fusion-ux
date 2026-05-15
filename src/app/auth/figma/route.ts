@@ -14,7 +14,7 @@ export async function GET() {
   const figmaUrl = new URL("https://www.figma.com/oauth");
   figmaUrl.searchParams.set("client_id", clientId);
   figmaUrl.searchParams.set("redirect_uri", redirectUri);
-  figmaUrl.searchParams.set("scope", "file_read");
+  figmaUrl.searchParams.set("scope", "current_user:read");
   figmaUrl.searchParams.set("state", state);
   figmaUrl.searchParams.set("response_type", "code");
 
