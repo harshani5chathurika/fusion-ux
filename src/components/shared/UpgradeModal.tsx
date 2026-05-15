@@ -33,19 +33,26 @@ const PLANS = [
   },
 ];
 
-const BANK_DETAILS = {
-  bankName: "Bank of Ceylon",
-  accountName: "Fusion UX Ltd",
-  accountNumber: "1234567890",
-  branch: "Colombo 07",
-  swiftCode: "BCEYLKLX",
-  reference: `FUXPAY-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+const REFERENCE = `FUXPAY-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+const BANK_ACCOUNTS = {
+  revolut: {
+    label: "Revolut",
+    color: "bg-[#0666EB]",
+    fields: [
+      { label: "Account Name", value: "Harshani Gajanayake" },
+      { label: "IBAN", value: "IT25A0366901600278296175167" },
+      { label: "BIC / SWIFT", value: "REVOITM2" },
+      { label: "Bank", value: "Revolut Bank UAB (Italy)" },
+    ],
+  },
 };
 
 export function UpgradeModal({ onClose, onSuccess }: UpgradeModalProps) {
   const [selectedPlan, setSelectedPlan] = useState<Plan>("credits_5");
   const [payMethod, setPayMethod] = useState<PayMethod>("paypal");
   const [copied, setCopied] = useState(false);
+  const reference = REFERENCE;
 
   async function handlePayPalCapture(orderId: string) {
     const res = await fetch("/api/billing/paypal-order", {
@@ -210,41 +217,51 @@ export function UpgradeModal({ onClose, onSuccess }: UpgradeModalProps) {
               <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4">
                 <p className="text-xs font-bold text-amber-700 dark:text-amber-300 mb-1">Manual bank transfer</p>
                 <p className="text-xs text-amber-700/80 dark:text-amber-300/80">
-                  Transfer to our bank account and email your receipt to{" "}
+                  Transfer to the account below and email your receipt to{" "}
                   <a href="mailto:billing@fusionux.app" className="font-semibold underline">billing@fusionux.app</a>.
                   Credits will be added within 1–2 business days.
                 </p>
               </div>
 
-              <div className="rounded-xl border border-border divide-y divide-border text-sm overflow-hidden">
-                {[
-                  { label: "Bank", value: BANK_DETAILS.bankName },
-                  { label: "Account Name", value: BANK_DETAILS.accountName },
-                  { label: "Account No.", value: BANK_DETAILS.accountNumber },
-                  { label: "Branch", value: BANK_DETAILS.branch },
-                  { label: "SWIFT / BIC", value: BANK_DETAILS.swiftCode },
-                  { label: "Amount", value: `${selectedPrice?.price} USD` },
-                  { label: "Reference", value: BANK_DETAILS.reference },
-                ].map(({ label, value }) => (
-                  <div key={label} className="flex items-center justify-between px-4 py-2.5">
-                    <span className="text-muted-foreground text-xs">{label}</span>
-                    <span className="font-mono font-medium text-xs">{value}</span>
+              {/* Revolut account */}
+              <div className="rounded-xl border border-border overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-[#0666EB] text-white">
+                  <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center flex-shrink-0">
+                    <span className="text-[#0666EB] font-black text-[10px]">R</span>
                   </div>
-                ))}
+                  <p className="text-xs font-bold">Revolut</p>
+                </div>
+                <div className="divide-y divide-border">
+                  {BANK_ACCOUNTS.revolut.fields.map(({ label, value }) => (
+                    <div key={label} className="flex items-center justify-between px-4 py-2.5">
+                      <span className="text-muted-foreground text-xs">{label}</span>
+                      <span className="font-mono font-medium text-xs select-all">{value}</span>
+                    </div>
+                  ))}
+                  <div className="flex items-center justify-between px-4 py-2.5">
+                    <span className="text-muted-foreground text-xs">Amount</span>
+                    <span className="font-mono font-bold text-xs text-violet-600 dark:text-violet-400">{selectedPrice?.price} USD</span>
+                  </div>
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-yellow-50 dark:bg-yellow-950/20">
+                    <span className="text-muted-foreground text-xs">Reference <span className="text-red-500">*required</span></span>
+                    <span className="font-mono font-bold text-xs">{reference}</span>
+                  </div>
+                </div>
               </div>
 
               <button
                 onClick={() => copyToClipboard(
-                  `Bank: ${BANK_DETAILS.bankName}\nAccount Name: ${BANK_DETAILS.accountName}\nAccount No.: ${BANK_DETAILS.accountNumber}\nBranch: ${BANK_DETAILS.branch}\nSWIFT: ${BANK_DETAILS.swiftCode}\nAmount: ${selectedPrice?.price} USD\nReference: ${BANK_DETAILS.reference}`
+                  `Account Name: Harshani Gajanayake\nIBAN: IT25A0366901600278296175167\nBIC: REVOITM2\nBank: Revolut Bank UAB (Italy)\nAmount: ${selectedPrice?.price} USD\nReference: ${reference}`
                 )}
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border bg-background text-sm font-medium hover:bg-accent transition-colors"
               >
                 {copied ? <Check className="h-4 w-4 text-green-500" /> : <ExternalLink className="h-4 w-4" />}
-                {copied ? "Copied!" : "Copy bank details"}
+                {copied ? "Copied!" : "Copy account details"}
               </button>
 
               <p className="text-xs text-center text-muted-foreground">
-                Include reference <span className="font-mono font-bold">{BANK_DETAILS.reference}</span> in your transfer
+                You <span className="font-semibold text-foreground">must</span> include reference{" "}
+                <span className="font-mono font-bold">{reference}</span> so we can match your payment
               </p>
             </div>
           )}
