@@ -16,9 +16,9 @@ export default async function FindingsPage() {
       impact_score, frequency_score, priority_score,
       ai_generated, ai_suggestion, business_impact, tags,
       created_at, updated_at,
-      audits!inner(id, name, created_by)
+      audits!inner(id, name)
     `)
-    .eq("audits.created_by", user!.id)
+    .eq("audits.created_by", user?.id ?? "")
     .order("priority_score", { ascending: false })
     .limit(200);
 
