@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import OpenAI from "openai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const dynamic = "force-dynamic";
@@ -52,22 +51,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { finding_id, audit_id, screenshot_url, finding } = body;
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
 
-    // Step 1: GPT-4o analyzes the violation → spec + DALL-E prompt
-    const specResponse = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "user",
-          content: [
-            ...(screenshot_url ? [{
-              type: "image_url" as const,
-              image_url: { url: screenshot_url as string, detail: "high" as const },
-            }] : []),
-            {
-              type: "text" as const,
-              text: `You are a senior UX designer. Analyze this UI screenshot and the heuristic violation below, then generate a precise visual fix specification.
+    // Step 1: Gemini analyzes the violation → spec + image prompt
+    const visionModel = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash",
+      generationConfig: { responseMimeType: "application/json" } as never,
+    });
+
+    const analysisPrompt = `You are a senior UX designer. Analyze this UI screenshot and the heuristic violation below, then generate a precise visual fix specification.
 
 VIOLATION:
 - Title: ${finding.title}
@@ -79,18 +71,27 @@ VIOLATION:
 Return a JSON object with these exact keys:
 {
   "specification": "A 2-3 sentence description of what the fixed UI looks like — colors, layout, spacing, typography",
-  "dalle_prompt": "A DALL-E 3 prompt (max 150 words) starting with 'Clean modern UI mockup,' describing the FIXED interface. Be specific about the exact visual elements that resolve the violation.",
+  "dalle_prompt": "A UI mockup prompt (max 150 words) starting with 'Clean modern UI mockup,' describing the FIXED interface. Be specific about the exact visual elements that resolve the violation.",
   "figma_prompt": "A Figma AI / FigJam prompt a designer can paste directly. Include component names, variant properties, spacing values, and color tokens."
-}`,
-            },
-          ],
-        },
-      ],
-      max_tokens: 800,
-      response_format: { type: "json_object" },
+}`;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const parts: any[] = [];
+
+    if (screenshot_url) {
+      const imgRes = await fetch(screenshot_url as string);
+      const imgBuf = await imgRes.arrayBuffer();
+      const imgBase64 = Buffer.from(imgBuf).toString("base64");
+      const mimeType = imgRes.headers.get("content-type") ?? "image/png";
+      parts.push({ inlineData: { mimeType, data: imgBase64 } });
+    }
+    parts.push({ text: analysisPrompt });
+
+    const specResponse = await visionModel.generateContent({
+      contents: [{ role: "user", parts }],
     });
 
-    const specText = specResponse.choices[0]?.message?.content ?? "{}";
+    const specText = specResponse.response.text() ?? "{}";
     let spec: { specification: string; dalle_prompt: string; figma_prompt: string };
     try {
       spec = JSON.parse(specText);
@@ -99,7 +100,6 @@ Return a JSON object with these exact keys:
     }
 
     // Step 2: Gemini generates the fixed UI mockup
-    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
     const imageModel = genAI.getGenerativeModel({
       model: "gemini-2.0-flash-exp-image-generation",
     });
