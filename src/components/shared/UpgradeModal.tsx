@@ -115,7 +115,7 @@ export function UpgradeModal({ onClose, onSuccess }: UpgradeModalProps) {
   const [selectedPlan, setSelectedPlan] = useState<Plan>("credits_5");
   const [payMethod, setPayMethod] = useState<PayMethod>("card");
   const [clientToken, setClientToken] = useState<string | null>(null);
-  const [tokenLoading, setTokenLoading] = useState(false);
+  const [tokenLoading, setTokenLoading] = useState(true);
 
   useEffect(() => {
     if (payMethod !== "card") return;
