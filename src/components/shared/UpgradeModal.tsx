@@ -1,13 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { X, Zap, Check, Building2, ExternalLink, Globe } from "lucide-react";
-import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+import { X, Zap, Check, Globe, CreditCard, Loader2 } from "lucide-react";
+import {
+  PayPalScriptProvider,
+  PayPalButtons,
+  PayPalHostedFieldsProvider,
+  PayPalHostedField,
+  usePayPalHostedFields,
+} from "@paypal/react-paypal-js";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
 
 type Plan = "credits_5" | "pro_monthly";
-type PayMethod = "paypal" | "bank";
+type PayMethod = "card" | "paypal";
 
 interface UpgradeModalProps {
   onClose: () => void;
@@ -33,27 +39,95 @@ const PLANS = [
   },
 ];
 
-const REFERENCE = `FUXPAY-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+// Card icons as inline SVG paths
+function VisaIcon() {
+  return (
+    <svg viewBox="0 0 48 16" className="h-5 w-auto" fill="none">
+      <text x="0" y="13" fontFamily="Arial" fontWeight="bold" fontSize="14" fill="#1A1F71">VISA</text>
+    </svg>
+  );
+}
+function MastercardIcon() {
+  return (
+    <svg viewBox="0 0 38 24" className="h-5 w-auto">
+      <circle cx="15" cy="12" r="10" fill="#EB001B" />
+      <circle cx="23" cy="12" r="10" fill="#F79E1B" />
+      <path d="M19 4.8a10 10 0 0 1 0 14.4A10 10 0 0 1 19 4.8z" fill="#FF5F00" />
+    </svg>
+  );
+}
 
-const BANK_ACCOUNTS = {
-  revolut: {
-    label: "Revolut",
-    fields: [
-      { label: "Account Name", value: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME ?? "" },
-      { label: "IBAN", value: process.env.NEXT_PUBLIC_BANK_IBAN ?? "" },
-      { label: "BIC / SWIFT", value: process.env.NEXT_PUBLIC_BANK_BIC ?? "" },
-      { label: "Bank", value: "Revolut Bank UAB (Italy)" },
-    ],
+// Hosted fields submit button — must be inside PayPalHostedFieldsProvider
+function CardSubmitButton({ onSuccess, onError, plan }: { onSuccess: () => void; onError: () => void; plan: Plan }) {
+  const hostedFields = usePayPalHostedFields();
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handlePay() {
+    if (!hostedFields?.cardFields) return;
+    setSubmitting(true);
+    try {
+      const order = await hostedFields.cardFields.submit({
+        // billing address optional
+      });
+      // Capture on server
+      const res = await fetch("/api/billing/paypal-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "capture", order_id: order.orderId, plan }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Payment successful! Credits added.");
+        onSuccess();
+      } else {
+        throw new Error("Capture failed");
+      }
+    } catch {
+      onError();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <button
+      onClick={handlePay}
+      disabled={submitting}
+      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold text-sm hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+    >
+      {submitting
+        ? <><Loader2 className="h-4 w-4 animate-spin" />Processing…</>
+        : <><CreditCard className="h-4 w-4" />Pay Now</>
+      }
+    </button>
+  );
+}
+
+const HOSTED_FIELD_STYLES = {
+  input: {
+    "font-size": "14px",
+    "font-family": "inherit",
+    color: "inherit",
   },
 };
 
 export function UpgradeModal({ onClose, onSuccess }: UpgradeModalProps) {
   const [selectedPlan, setSelectedPlan] = useState<Plan>("credits_5");
-  const [payMethod, setPayMethod] = useState<PayMethod>("paypal");
-  const [copied, setCopied] = useState(false);
-  const reference = REFERENCE;
+  const [payMethod, setPayMethod] = useState<PayMethod>("card");
 
-  async function handlePayPalCapture(orderId: string) {
+  const selectedPrice = PLANS.find((p) => p.id === selectedPlan);
+
+  async function createOrder() {
+    const res = await fetch("/api/billing/paypal-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "create", plan: selectedPlan }),
+    });
+    const data = await res.json();
+    return data.id as string;
+  }
+
+  async function captureOrder(orderId: string) {
     const res = await fetch("/api/billing/paypal-order", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -68,14 +142,6 @@ export function UpgradeModal({ onClose, onSuccess }: UpgradeModalProps) {
       throw new Error("Capture failed");
     }
   }
-
-  function copyToClipboard(text: string) {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  const selectedPrice = PLANS.find((p) => p.id === selectedPlan);
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -144,126 +210,123 @@ export function UpgradeModal({ onClose, onSuccess }: UpgradeModalProps) {
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Payment Method</p>
             <div className="flex gap-2">
               <button
+                onClick={() => setPayMethod("card")}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all flex-1 justify-center",
+                  payMethod === "card"
+                    ? "border-violet-500 bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300"
+                    : "border-border hover:border-violet-300 text-muted-foreground"
+                )}
+              >
+                <CreditCard className="h-4 w-4" />
+                Card
+                <div className="flex items-center gap-1 ml-1">
+                  <VisaIcon />
+                  <MastercardIcon />
+                </div>
+              </button>
+              <button
                 onClick={() => setPayMethod("paypal")}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all",
+                  "flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all flex-1 justify-center",
                   payMethod === "paypal"
                     ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
-                    : "border-border hover:border-blue-300 text-muted-foreground hover:text-foreground"
+                    : "border-border hover:border-blue-300 text-muted-foreground"
                 )}
               >
                 <Globe className="h-4 w-4 text-[#009cde]" />
-                <span>
-                  <span className="font-bold text-[#003087] dark:text-[#009cde]">Pay</span>
-                  <span className="font-bold text-[#009cde]">Pal</span>
-                </span>
-                <span className="text-[10px] text-muted-foreground">(cards accepted)</span>
-              </button>
-              <button
-                onClick={() => setPayMethod("bank")}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all",
-                  payMethod === "bank"
-                    ? "border-violet-500 bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300"
-                    : "border-border hover:border-violet-300 text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Building2 className="h-4 w-4" />
-                Bank Transfer
+                <span className="font-bold text-[#003087] dark:text-[#009cde]">Pay</span>
+                <span className="font-bold text-[#009cde] -ml-1.5">Pal</span>
               </button>
             </div>
           </div>
 
+          {/* Order summary */}
+          <div className="rounded-xl border border-border bg-muted/30 px-4 py-3 flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">{selectedPrice?.name}</span>
+            <span className="font-bold">{selectedPrice?.price} <span className="text-muted-foreground font-normal">{selectedPrice?.per}</span></span>
+          </div>
+
+          {/* Card payment via PayPal Hosted Fields */}
+          {payMethod === "card" && (
+            <PayPalScriptProvider options={{
+              clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? "",
+              currency: "USD",
+              components: "hosted-fields",
+              intent: "capture",
+            }}>
+              <PayPalHostedFieldsProvider
+                createOrder={createOrder}
+                styles={HOSTED_FIELD_STYLES}
+              >
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">Card number</label>
+                    <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring">
+                      <CreditCard className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <div className="flex-1 h-5">
+                        <PayPalHostedField id="card-number" hostedFieldType="number"
+                          className="w-full h-full outline-none bg-transparent text-sm"
+                          options={{ selector: "#card-number", placeholder: "1234 5678 9012 3456" }}
+                        />
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <VisaIcon />
+                        <MastercardIcon />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Expiry date</label>
+                      <div className="px-3 py-2.5 rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring h-11">
+                        <PayPalHostedField id="expiration-date" hostedFieldType="expirationDate"
+                          className="w-full h-full outline-none bg-transparent text-sm"
+                          options={{ selector: "#expiration-date", placeholder: "MM / YY" }}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">CVV</label>
+                      <div className="px-3 py-2.5 rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring h-11">
+                        <PayPalHostedField id="cvv" hostedFieldType="cvv"
+                          className="w-full h-full outline-none bg-transparent text-sm"
+                          options={{ selector: "#cvv", placeholder: "CVV" }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <CardSubmitButton
+                    plan={selectedPlan}
+                    onSuccess={() => { onSuccess?.(); onClose(); }}
+                    onError={() => toast.error("Payment failed. Please check your card details.")}
+                  />
+
+                  <p className="text-xs text-center text-muted-foreground">
+                    🔒 Secured by PayPal · Visa, Mastercard, Debit & Credit cards accepted
+                  </p>
+                </div>
+              </PayPalHostedFieldsProvider>
+            </PayPalScriptProvider>
+          )}
+
           {/* PayPal */}
           {payMethod === "paypal" && (
-            <div className="space-y-3">
-              <div className="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20 p-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{selectedPrice?.name}</span>
-                  <span className="font-bold">{selectedPrice?.price} {selectedPrice?.per}</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Pay with PayPal or debit/credit card — no PayPal account required for card payments
-                </p>
-              </div>
-              <PayPalScriptProvider options={{
-                clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? "test",
-                currency: "USD",
-              }}>
-                <PayPalButtons
-                  style={{ layout: "vertical", color: "blue", shape: "rect", label: "pay" }}
-                  createOrder={async () => {
-                    const res = await fetch("/api/billing/paypal-order", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ action: "create", plan: selectedPlan }),
-                    });
-                    const data = await res.json();
-                    return data.id;
-                  }}
-                  onApprove={async (data) => {
-                    await handlePayPalCapture(data.orderID);
-                  }}
-                  onError={() => toast.error("PayPal payment failed. Please try again.")}
-                />
-              </PayPalScriptProvider>
-            </div>
+            <PayPalScriptProvider options={{
+              clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? "",
+              currency: "USD",
+            }}>
+              <PayPalButtons
+                style={{ layout: "vertical", color: "blue", shape: "rect", label: "pay" }}
+                createOrder={createOrder}
+                onApprove={async (data) => { await captureOrder(data.orderID); }}
+                onError={() => toast.error("PayPal payment failed. Please try again.")}
+              />
+            </PayPalScriptProvider>
           )}
 
-          {/* Bank Transfer */}
-          {payMethod === "bank" && (
-            <div className="space-y-4">
-              <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4">
-                <p className="text-xs font-bold text-amber-700 dark:text-amber-300 mb-1">Manual bank transfer</p>
-                <p className="text-xs text-amber-700/80 dark:text-amber-300/80">
-                  Transfer to the account below and email your receipt to{" "}
-                  <a href="mailto:billing@fusionux.app" className="font-semibold underline">billing@fusionux.app</a>.
-                  Credits will be added within 1–2 business days.
-                </p>
-              </div>
-
-              {/* Revolut account */}
-              <div className="rounded-xl border border-border overflow-hidden">
-                <div className="flex items-center gap-2 px-4 py-2.5 bg-[#0666EB] text-white">
-                  <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center flex-shrink-0">
-                    <span className="text-[#0666EB] font-black text-[10px]">R</span>
-                  </div>
-                  <p className="text-xs font-bold">Revolut</p>
-                </div>
-                <div className="divide-y divide-border">
-                  {BANK_ACCOUNTS.revolut.fields.map(({ label, value }) => (
-                    <div key={label} className="flex items-center justify-between px-4 py-2.5">
-                      <span className="text-muted-foreground text-xs">{label}</span>
-                      <span className="font-mono font-medium text-xs select-all">{value}</span>
-                    </div>
-                  ))}
-                  <div className="flex items-center justify-between px-4 py-2.5">
-                    <span className="text-muted-foreground text-xs">Amount</span>
-                    <span className="font-mono font-bold text-xs text-violet-600 dark:text-violet-400">{selectedPrice?.price} USD</span>
-                  </div>
-                  <div className="flex items-center justify-between px-4 py-2.5 bg-yellow-50 dark:bg-yellow-950/20">
-                    <span className="text-muted-foreground text-xs">Reference <span className="text-red-500">*required</span></span>
-                    <span className="font-mono font-bold text-xs">{reference}</span>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={() => copyToClipboard(
-                  `Account Name: ${process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME}\nIBAN: ${process.env.NEXT_PUBLIC_BANK_IBAN}\nBIC: ${process.env.NEXT_PUBLIC_BANK_BIC}\nBank: Revolut Bank UAB (Italy)\nAmount: ${selectedPrice?.price} USD\nReference: ${reference}`
-                )}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border bg-background text-sm font-medium hover:bg-accent transition-colors"
-              >
-                {copied ? <Check className="h-4 w-4 text-green-500" /> : <ExternalLink className="h-4 w-4" />}
-                {copied ? "Copied!" : "Copy account details"}
-              </button>
-
-              <p className="text-xs text-center text-muted-foreground">
-                You <span className="font-semibold text-foreground">must</span> include reference{" "}
-                <span className="font-mono font-bold">{reference}</span> so we can match your payment
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </div>
