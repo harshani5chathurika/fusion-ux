@@ -22,5 +22,6 @@ export default async function FindingsPage() {
     .order("priority_score", { ascending: false })
     .limit(200);
 
-  return <FindingsClient findings={findings ?? []} />;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return <FindingsClient findings={(findings ?? []) as any} />;
 }
