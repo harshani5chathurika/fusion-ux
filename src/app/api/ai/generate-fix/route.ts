@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Anthropic from "@anthropic-ai/sdk";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const dynamic = "force-dynamic";
 
@@ -107,26 +106,15 @@ Return valid JSON only. No markdown, no prose outside JSON.`;
       return NextResponse.json({ error: "Failed to parse AI specification" }, { status: 500 });
     }
 
-    // Step 2: Gemini generates the fixed UI mockup image
-    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
-    const imageModel = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash-exp-image-generation",
-    });
+    // Step 2: Pollinations FLUX generates the fixed UI mockup image (no API key required)
+    const imagePrompt = `Clean modern UI mockup, professional web interface design, ${spec.dalle_prompt}`;
+    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=1280&height=720&model=flux&nologo=true&seed=${Date.now()}`;
 
-    const imageResult = await imageModel.generateContent({
-      contents: [{ role: "user", parts: [{ text: `Generate a clean, modern UI mockup image. ${spec.dalle_prompt}` }] }],
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      generationConfig: { responseModalities: ["IMAGE"] } as any,
-    });
+    const imageRes = await fetch(pollinationsUrl, { signal: AbortSignal.timeout(60_000) });
+    if (!imageRes.ok) return NextResponse.json({ error: "Image generation failed" }, { status: 500 });
 
-    let imgBuffer: Buffer | null = null;
-    for (const part of imageResult.response.candidates?.[0]?.content?.parts ?? []) {
-      if (part.inlineData?.data) {
-        imgBuffer = Buffer.from(part.inlineData.data, "base64");
-        break;
-      }
-    }
-    if (!imgBuffer) return NextResponse.json({ error: "Image generation failed" }, { status: 500 });
+    const imgBuffer = Buffer.from(await imageRes.arrayBuffer());
+    if (!imgBuffer.length) return NextResponse.json({ error: "Image generation returned empty result" }, { status: 500 });
 
     const storagePath = `${user.id}/${audit_id}/ai_fix_${finding_id}_${Date.now()}.png`;
     const { error: uploadError } = await supabase.storage
