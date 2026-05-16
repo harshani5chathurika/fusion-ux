@@ -1,272 +1,304 @@
 import React from "react";
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  StyleSheet,
-} from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { HEURISTIC_CHECKLIST } from "@/lib/checklist";
 
-// ============================================================
+// ─────────────────────────────────────────────────────────────
+// DESIGN TOKENS
+// ─────────────────────────────────────────────────────────────
+const C = {
+  slate950: "#020617",
+  slate900: "#0f172a",
+  slate800: "#1e293b",
+  slate700: "#334155",
+  slate600: "#475569",
+  slate500: "#64748b",
+  slate400: "#94a3b8",
+  slate300: "#cbd5e1",
+  slate200: "#e2e8f0",
+  slate100: "#f1f5f9",
+  slate50:  "#f8fafc",
+  white:    "#ffffff",
+  indigo600: "#4f46e5",
+  indigo500: "#6366f1",
+  indigo400: "#818cf8",
+  indigo100: "#e0e7ff",
+  red600:   "#dc2626",
+  red50:    "#fef2f2",
+  red200:   "#fecaca",
+  orange600: "#ea580c",
+  orange50:  "#fff7ed",
+  orange200: "#fed7aa",
+  yellow600: "#ca8a04",
+  yellow50:  "#fefce8",
+  yellow200: "#fde047",
+  green600:  "#16a34a",
+  green50:   "#f0fdf4",
+  green200:  "#bbf7d0",
+  blue600:   "#2563eb",
+  blue50:    "#eff6ff",
+  blue200:   "#bfdbfe",
+  purple700: "#7e22ce",
+  purple50:  "#faf5ff",
+} as const;
+
+// ─────────────────────────────────────────────────────────────
 // STYLES
-// ============================================================
-const styles = StyleSheet.create({
-  page: {
+// ─────────────────────────────────────────────────────────────
+const S = StyleSheet.create({
+  // ── Page layouts ──
+  darkPage: {
     fontFamily: "Helvetica",
-    fontSize: 10,
-    paddingTop: 40,
-    paddingBottom: 50,
-    paddingHorizontal: 46,
-    backgroundColor: "#ffffff",
-    color: "#111827",
+    backgroundColor: C.slate900,
+    paddingTop: 0, paddingBottom: 0, paddingHorizontal: 0,
+    color: C.white,
   },
-  coverPage: { justifyContent: "center", alignItems: "center", backgroundColor: "#4f46e5" },
+  lightPage: {
+    fontFamily: "Helvetica",
+    backgroundColor: C.white,
+    paddingTop: 36, paddingBottom: 48,
+    paddingHorizontal: 44,
+    color: C.slate900,
+  },
 
-  // Header / Footer
-  pageHeader: {
-    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
-    marginBottom: 20, paddingBottom: 10,
-    borderBottomWidth: 1, borderBottomColor: "#e5e7eb",
-  },
-  pageHeaderTitle: { fontSize: 10, fontFamily: "Helvetica-Bold", color: "#4f46e5" },
-  pageHeaderSub: { fontSize: 8, color: "#9ca3af" },
-  pageFooter: {
-    position: "absolute", bottom: 18, left: 46, right: 46,
+  // ── Running footer ──
+  footer: {
+    position: "absolute", bottom: 16, left: 44, right: 44,
     flexDirection: "row", justifyContent: "space-between",
-    fontSize: 7, color: "#9ca3af",
-    borderTopWidth: 1, borderTopColor: "#f3f4f6", paddingTop: 5,
+    alignItems: "center",
+    borderTopWidth: 1, borderTopColor: C.slate200, paddingTop: 5,
   },
+  footerText: { fontSize: 7, color: C.slate400 },
+  footerBrand: { fontSize: 7, color: C.indigo600, fontFamily: "Helvetica-Bold" },
 
-  // Cover
+  // ── Light page running header ──
+  runningHeader: {
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+    marginBottom: 18, paddingBottom: 10,
+    borderBottomWidth: 1, borderBottomColor: C.slate200,
+  },
+  runningHeaderLeft: { fontSize: 8, fontFamily: "Helvetica-Bold", color: C.indigo600 },
+  runningHeaderRight: { fontSize: 8, color: C.slate500 },
+
+  // ── Cover page elements ──
+  coverInner: {
+    flex: 1, justifyContent: "space-between",
+    paddingTop: 56, paddingBottom: 44, paddingHorizontal: 50,
+  },
+  coverTopBar: {
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+    paddingBottom: 28, borderBottomWidth: 1, borderBottomColor: C.slate700,
+    marginBottom: 36,
+  },
   coverLogo: {
-    width: 64, height: 64, backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: 14, justifyContent: "center", alignItems: "center", marginBottom: 20,
+    width: 44, height: 44, backgroundColor: C.indigo500,
+    borderRadius: 10, justifyContent: "center", alignItems: "center",
   },
-  coverTitle: { fontSize: 34, fontFamily: "Helvetica-Bold", color: "#ffffff", textAlign: "center", marginBottom: 6 },
-  coverSubtitle: { fontSize: 13, color: "rgba(255,255,255,0.8)", textAlign: "center", marginBottom: 36 },
-  coverMeta: { backgroundColor: "rgba(255,255,255,0.15)", borderRadius: 12, padding: 22, width: "82%" },
-  coverMetaRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 9 },
-  coverMetaLabel: { color: "rgba(255,255,255,0.6)", fontSize: 9 },
-  coverMetaValue: { color: "#ffffff", fontFamily: "Helvetica-Bold", fontSize: 9 },
-  coverScoreRow: {
-    flexDirection: "row", gap: 10, marginTop: 20, width: "82%",
+  coverLogoText: { fontSize: 20, fontFamily: "Helvetica-Bold", color: C.white },
+  coverBrand: { fontSize: 11, fontFamily: "Helvetica-Bold", color: C.indigo400, letterSpacing: 2 },
+  coverConfidential: { fontSize: 7, color: C.slate500 },
+  coverReportType: { fontSize: 9, color: C.indigo400, fontFamily: "Helvetica-Bold", marginBottom: 10 },
+  coverTitle: { fontSize: 28, fontFamily: "Helvetica-Bold", color: C.white, lineHeight: 1.2, marginBottom: 8 },
+  coverSubtitle: { fontSize: 13, color: C.slate400, marginBottom: 36 },
+  coverMetaGrid: { flexDirection: "row", gap: 12, marginBottom: 36 },
+  coverMetaCard: {
+    flex: 1, backgroundColor: C.slate800, borderRadius: 8, padding: 14,
+    borderTopWidth: 2, borderTopColor: C.indigo600,
   },
+  coverMetaLabel: { fontSize: 7, color: C.slate500, marginBottom: 4, fontFamily: "Helvetica-Bold" },
+  coverMetaValue: { fontSize: 10, fontFamily: "Helvetica-Bold", color: C.white },
+  coverScoreGrid: { flexDirection: "row", gap: 8 },
   coverScoreCard: {
-    flex: 1, backgroundColor: "rgba(255,255,255,0.15)", borderRadius: 8,
-    padding: 12, alignItems: "center",
+    flex: 1, backgroundColor: C.slate800, borderRadius: 6, padding: 12, alignItems: "center",
   },
-  coverScoreNum: { fontSize: 22, fontFamily: "Helvetica-Bold", color: "#ffffff" },
-  coverScoreLabel: { fontSize: 7, color: "rgba(255,255,255,0.7)", textAlign: "center", marginTop: 2 },
+  coverScoreNum: { fontSize: 20, fontFamily: "Helvetica-Bold", color: C.white, marginBottom: 2 },
+  coverScoreLabel: { fontSize: 6, color: C.slate400, textAlign: "center" },
+  coverBottomBar: {
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+    paddingTop: 20, borderTopWidth: 1, borderTopColor: C.slate700,
+  },
+  coverBottomText: { fontSize: 7, color: C.slate600 },
 
-  // Section
-  section: { marginBottom: 22 },
+  // ── Section headings ──
   sectionTitle: {
-    fontSize: 13, fontFamily: "Helvetica-Bold", color: "#111827",
-    marginBottom: 10, paddingBottom: 5,
-    borderBottomWidth: 2, borderBottomColor: "#4f46e5",
+    fontSize: 13, fontFamily: "Helvetica-Bold", color: C.slate900,
+    marginBottom: 10, paddingBottom: 6,
+    borderBottomWidth: 2, borderBottomColor: C.indigo600,
   },
-  subsectionTitle: {
-    fontSize: 10, fontFamily: "Helvetica-Bold", color: "#374151", marginBottom: 6, marginTop: 10,
-  },
+  subsectionTitle: { fontSize: 9, fontFamily: "Helvetica-Bold", color: C.slate700, marginBottom: 5, marginTop: 8 },
 
-  // Info box
+  // ── Exec summary ──
+  scoreBand: { flexDirection: "row", gap: 8, marginBottom: 16 },
+  scoreTile: { flex: 1, borderRadius: 7, padding: 13, alignItems: "center" },
+  scoreTilePrimary: { backgroundColor: C.indigo100, borderTopWidth: 3, borderTopColor: C.indigo600 },
+  scoreTileGood:    { backgroundColor: C.green50,   borderTopWidth: 3, borderTopColor: C.green600 },
+  scoreTileWarn:    { backgroundColor: C.yellow50,  borderTopWidth: 3, borderTopColor: C.yellow600 },
+  scoreTileDanger:  { backgroundColor: C.red50,     borderTopWidth: 3, borderTopColor: C.red600 },
+  scoreTileNum: { fontSize: 24, fontFamily: "Helvetica-Bold", marginBottom: 2 },
+  scoreTileLabel: { fontSize: 6, color: C.slate600, textAlign: "center" },
+  riskBox: {
+    backgroundColor: C.slate900, borderRadius: 7, padding: 14,
+    marginBottom: 14, flexDirection: "row", alignItems: "center", gap: 14,
+  },
+  riskLabel: { fontSize: 7, color: C.slate400, fontFamily: "Helvetica-Bold" },
+  riskValue: { fontSize: 22, fontFamily: "Helvetica-Bold", color: C.white },
+  riskFormula: { fontSize: 7, color: C.slate500 },
+  riskDesc: { fontSize: 8, color: C.slate300, flex: 1, lineHeight: 1.5 },
   infoBox: {
-    backgroundColor: "#f8f7ff", borderRadius: 8, padding: 14,
-    borderLeftWidth: 4, borderLeftColor: "#4f46e5", marginBottom: 14,
+    backgroundColor: C.slate50, borderRadius: 6, padding: 12,
+    borderLeftWidth: 3, borderLeftColor: C.indigo600, marginBottom: 12,
   },
-  infoBoxText: { fontSize: 9, color: "#374151", lineHeight: 1.6 },
+  infoBoxText: { fontSize: 9, color: C.slate700, lineHeight: 1.6 },
+  severityMatrix: { flexDirection: "row", gap: 8, marginBottom: 12 },
+  severityTile: { flex: 1, borderRadius: 6, padding: 10, alignItems: "center" },
+  severityTileNum: { fontSize: 18, fontFamily: "Helvetica-Bold", marginBottom: 2 },
+  severityTileLabel: { fontSize: 6, fontFamily: "Helvetica-Bold" },
+  priorityItem: { flexDirection: "row", gap: 8, marginBottom: 7 },
+  priorityBullet: {
+    width: 20, height: 20, borderRadius: 10,
+    justifyContent: "center", alignItems: "center",
+  },
+  priorityBulletText: { fontSize: 8, fontFamily: "Helvetica-Bold", color: C.white },
+  priorityText: { fontSize: 9, color: C.slate700, flex: 1, lineHeight: 1.5, paddingTop: 3 },
 
-  // Score cards
-  scoreGrid: { flexDirection: "row", gap: 10, marginBottom: 14 },
-  scoreCard: { flex: 1, borderRadius: 8, padding: 14, alignItems: "center" },
-  scoreCardPrimary: { backgroundColor: "#eef2ff" },
-  scoreCardGood: { backgroundColor: "#f0fdf4" },
-  scoreCardWarn: { backgroundColor: "#fffbeb" },
-  scoreCardDanger: { backgroundColor: "#fef2f2" },
-  scoreNumber: { fontSize: 26, fontFamily: "Helvetica-Bold", marginBottom: 2 },
-  scoreLabel: { fontSize: 7, color: "#6b7280", textAlign: "center" },
-
-  // Category score row
-  categoryRow: { flexDirection: "row", alignItems: "center", marginBottom: 5, gap: 8 },
-  categoryName: { fontSize: 8, color: "#374151", width: 180 },
-  categoryNum: { fontSize: 7, color: "#9ca3af", width: 22 },
-  categoryBarBg: { flex: 1, height: 9, backgroundColor: "#f3f4f6", borderRadius: 5, overflow: "hidden" },
-  categoryBarFill: { height: 9, borderRadius: 5 },
-  categoryScore: { fontSize: 8, fontFamily: "Helvetica-Bold", width: 28, textAlign: "right" },
-
-  // Severity matrix
-  severityRow: { flexDirection: "row", alignItems: "center", marginBottom: 8, gap: 8 },
-  severityLabel: { fontSize: 9, width: 52, color: "#374151" },
-  severityBar: { height: 13, borderRadius: 4 },
-  severityCount: { fontSize: 9, fontFamily: "Helvetica-Bold", color: "#111827" },
-
-  // Finding card — base
-  findingCard: { borderRadius: 8, padding: 12, marginBottom: 12, borderWidth: 1 },
-  findingCritical: { backgroundColor: "#fef2f2", borderColor: "#fca5a5" },
-  findingHigh:     { backgroundColor: "#fff7ed", borderColor: "#fdba74" },
-  findingMedium:   { backgroundColor: "#fefce8", borderColor: "#fde047" },
-  findingLow:      { backgroundColor: "#f0fdf4", borderColor: "#86efac" },
-
-  findingHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 },
-  findingTitleBlock: { flex: 1, marginRight: 10 },
-  findingBadgeRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },
-  findingTitle: { fontSize: 10, fontFamily: "Helvetica-Bold", color: "#111827" },
-  findingBadge: {
+  // ── Category chapter header ──
+  catChapter: {
+    backgroundColor: C.slate900, borderRadius: 7,
+    padding: 14, marginBottom: 12,
+    flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start",
+  },
+  catChapterLeft: { flex: 1 },
+  catChapterEyebrow: { fontSize: 7, color: C.indigo400, fontFamily: "Helvetica-Bold", marginBottom: 3 },
+  catChapterName: { fontSize: 14, fontFamily: "Helvetica-Bold", color: C.white, marginBottom: 6 },
+  catChapterStats: { flexDirection: "row", gap: 8 },
+  catChapterStat: {
+    backgroundColor: C.slate800, borderRadius: 4, padding: "5 8",
+    alignItems: "center", minWidth: 44,
+  },
+  catChapterStatNum: { fontSize: 11, fontFamily: "Helvetica-Bold", color: C.white },
+  catChapterStatLabel: { fontSize: 6, color: C.slate400 },
+  catChapterRight: { alignItems: "flex-end", gap: 4 },
+  catScore: { fontSize: 28, fontFamily: "Helvetica-Bold", color: C.white },
+  catScoreLabel: { fontSize: 7, color: C.slate400 },
+  healthBadge: {
     fontSize: 7, fontFamily: "Helvetica-Bold",
-    paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4,
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10,
   },
-  idBadge: {
-    fontSize: 7, color: "#6b7280",
-    backgroundColor: "rgba(0,0,0,0.06)", paddingHorizontal: 5, paddingVertical: 2, borderRadius: 3,
+
+  // ── Failure section ──
+  failuresSectionBar: {
+    backgroundColor: C.red50, borderRadius: 4,
+    flexDirection: "row", alignItems: "center", gap: 8,
+    paddingVertical: 5, paddingHorizontal: 10, marginBottom: 8,
+    borderLeftWidth: 3, borderLeftColor: C.red600,
   },
-  priorityBadge: {
-    fontSize: 7, color: "#4f46e5", fontFamily: "Helvetica-Bold",
-    backgroundColor: "#eef2ff", paddingHorizontal: 5, paddingVertical: 2, borderRadius: 3,
+  failuresSectionTitle: { fontSize: 8, fontFamily: "Helvetica-Bold", color: C.red600 },
+  failureCard: {
+    borderRadius: 6, padding: 10, marginBottom: 8,
+    borderLeftWidth: 3,
   },
-  badgeCritical: { backgroundColor: "#fee2e2", color: "#dc2626" },
-  badgeHigh:     { backgroundColor: "#ffedd5", color: "#ea580c" },
-  badgeMedium:   { backgroundColor: "#fef9c3", color: "#ca8a04" },
-  badgeLow:      { backgroundColor: "#dcfce7", color: "#16a34a" },
-
-  // Score dots
-  scoreDotsRow: { alignItems: "flex-end", gap: 4 },
-  scoreDotLabel: { fontSize: 6, color: "#9ca3af", textAlign: "right" },
-  dotsRow: { flexDirection: "row", gap: 2, justifyContent: "flex-end" },
-
-  // Meta strip
-  metaStrip: {
-    flexDirection: "row", flexWrap: "wrap", gap: 10,
-    backgroundColor: "rgba(0,0,0,0.04)", borderRadius: 4, padding: 6, marginBottom: 8,
+  failureCardCritical: { backgroundColor: "#fef9f9", borderLeftColor: C.red600 },
+  failureCardHigh:     { backgroundColor: "#fff9f5", borderLeftColor: C.orange600 },
+  failureCardMedium:   { backgroundColor: "#fffef0", borderLeftColor: C.yellow600 },
+  failureCardLow:      { backgroundColor: "#f5fff8", borderLeftColor: C.green600 },
+  failureTopRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 5 },
+  failureCriterionId: { fontSize: 8, fontFamily: "Helvetica-Bold", color: C.indigo600 },
+  failureTitle: { fontSize: 9, fontFamily: "Helvetica-Bold", color: C.slate900, flex: 1, marginRight: 8 },
+  severityPill: {
+    fontSize: 6, fontFamily: "Helvetica-Bold",
+    paddingHorizontal: 6, paddingVertical: 2, borderRadius: 3,
   },
-  metaItem: { fontSize: 7, color: "#6b7280" },
-  metaBold: { fontFamily: "Helvetica-Bold", color: "#374151" },
+  pillCritical: { backgroundColor: C.red200,    color: C.red600 },
+  pillHigh:     { backgroundColor: C.orange200, color: C.orange600 },
+  pillMedium:   { backgroundColor: C.yellow200, color: C.yellow600 },
+  pillLow:      { backgroundColor: C.green200,  color: C.green600 },
 
-  // Field label
-  fieldLabel: { fontSize: 7, fontFamily: "Helvetica-Bold", color: "#374151", marginBottom: 3 },
-  fieldText:  { fontSize: 8, color: "#4b5563", lineHeight: 1.5 },
+  evidenceBox: {
+    backgroundColor: C.slate800, borderRadius: 4, padding: 6, marginBottom: 6,
+    flexDirection: "row", gap: 6, alignItems: "flex-start",
+  },
+  evidenceLabel: { fontSize: 6, color: C.indigo400, fontFamily: "Helvetica-Bold", width: 60 },
+  evidenceText: { fontSize: 7, color: C.slate200, flex: 1, lineHeight: 1.4 },
 
-  // Pill blocks
-  pillRow: { flexDirection: "row", flexWrap: "wrap", gap: 4, marginBottom: 6 },
+  fieldLabel: { fontSize: 7, fontFamily: "Helvetica-Bold", color: C.slate600, marginBottom: 3 },
+  fieldText:  { fontSize: 8, color: C.slate700, lineHeight: 1.5 },
+
+  wcagRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 4, marginBottom: 5 },
+  wcagLabel: { fontSize: 7, fontFamily: "Helvetica-Bold", color: C.blue600 },
   wcagPill: {
-    fontSize: 6, fontFamily: "Helvetica-Bold", backgroundColor: "#dbeafe", color: "#1d4ed8",
+    fontSize: 6, fontFamily: "Helvetica-Bold",
+    backgroundColor: C.blue50, color: C.blue600,
     paddingHorizontal: 5, paddingVertical: 2, borderRadius: 3,
   },
-  tagPill: {
-    fontSize: 6, color: "#6b7280", backgroundColor: "#f3f4f6",
+  remediationBox: {
+    backgroundColor: C.purple50, borderRadius: 5, padding: 7,
+    borderLeftWidth: 2, borderLeftColor: C.purple700, marginTop: 5,
+  },
+  remediationLabel: { fontSize: 6, fontFamily: "Helvetica-Bold", color: C.purple700, marginBottom: 3 },
+  remediationText: { fontSize: 8, color: "#4c1d95", lineHeight: 1.45 },
+  businessImpactText: { fontSize: 7, color: C.orange600, lineHeight: 1.4, marginTop: 5, fontFamily: "Helvetica-Oblique" },
+
+  // ── Passed checks ──
+  passedSectionBar: {
+    backgroundColor: C.green50, borderRadius: 4,
+    flexDirection: "row", alignItems: "center", gap: 8,
+    paddingVertical: 5, paddingHorizontal: 10, marginBottom: 6,
+    borderLeftWidth: 3, borderLeftColor: C.green600,
+  },
+  passedSectionTitle: { fontSize: 8, fontFamily: "Helvetica-Bold", color: C.green600 },
+  passedGrid: { flexDirection: "row", flexWrap: "wrap", gap: 3 },
+  passedItem: {
+    flexDirection: "row", alignItems: "flex-start", gap: 3,
+    width: "48%",
+    backgroundColor: C.green50, borderRadius: 3, padding: "3 5",
+  },
+  passedCheckmark: { fontSize: 7, color: C.green600, fontFamily: "Helvetica-Bold" },
+  passedId: { fontSize: 6, color: C.green600, fontFamily: "Helvetica-Bold", width: 22 },
+  passedText: { fontSize: 6, color: C.slate600, flex: 1, lineHeight: 1.3 },
+
+  // ── Validation protocol ──
+  validationStep: {
+    flexDirection: "row", gap: 12, marginBottom: 12,
+    backgroundColor: C.slate50, borderRadius: 6, padding: 10,
+  },
+  validationStepNum: {
+    width: 28, height: 28, borderRadius: 14,
+    backgroundColor: C.slate900, justifyContent: "center", alignItems: "center",
+    flexShrink: 0,
+  },
+  validationStepNumText: { fontSize: 10, fontFamily: "Helvetica-Bold", color: C.white },
+  validationStepBody: { flex: 1 },
+  validationStepTitle: { fontSize: 9, fontFamily: "Helvetica-Bold", color: C.slate900, marginBottom: 3 },
+  validationStepText: { fontSize: 8, color: C.slate600, lineHeight: 1.5 },
+  criteriaTable: { borderWidth: 1, borderColor: C.slate200, borderRadius: 5, overflow: "hidden", marginTop: 10 },
+  criteriaHeaderRow: { flexDirection: "row", backgroundColor: C.slate900, padding: 7 },
+  criteriaHeaderCell: { fontSize: 7, fontFamily: "Helvetica-Bold", color: C.white },
+  criteriaRow: { flexDirection: "row", padding: 7, borderTopWidth: 1, borderTopColor: C.slate200 },
+  criteriaRowAlt: { backgroundColor: C.slate50 },
+  criteriaCell: { fontSize: 8, color: C.slate700 },
+
+  // ── Category score table ──
+  catScoreRow: { flexDirection: "row", alignItems: "center", marginBottom: 5, gap: 8 },
+  catScoreRowNum: { fontSize: 7, color: C.slate500, width: 22 },
+  catScoreRowName: { fontSize: 8, color: C.slate700, width: 170 },
+  catScoreBarBg: { flex: 1, height: 8, backgroundColor: C.slate200, borderRadius: 4, overflow: "hidden" },
+  catScoreBarFill: { height: 8, borderRadius: 4 },
+  catScoreValue: { fontSize: 8, fontFamily: "Helvetica-Bold", width: 25, textAlign: "right" },
+
+  // ── General ──
+  divider: { borderBottomWidth: 1, borderBottomColor: C.slate200, marginVertical: 10 },
+  twoCol: { flexDirection: "row", gap: 10 },
+  col: { flex: 1 },
+  tag: {
+    fontSize: 6, color: C.slate500, backgroundColor: C.slate100,
     paddingHorizontal: 5, paddingVertical: 2, borderRadius: 10,
   },
-
-  // Inset boxes
-  aiBox: { marginTop: 6, backgroundColor: "#f5f3ff", borderRadius: 5, padding: 8 },
-  aiBoxLabel: { fontSize: 7, color: "#7c3aed", fontFamily: "Helvetica-Bold", marginBottom: 3 },
-  aiBoxText: { fontSize: 8, color: "#4c1d95", lineHeight: 1.45 },
-  impactBox: { flex: 1, backgroundColor: "#fff7ed", borderRadius: 5, padding: 8 },
-  impactLabel: { fontSize: 7, color: "#c2410c", fontFamily: "Helvetica-Bold", marginBottom: 3 },
-  impactText: { fontSize: 8, color: "#7c2d12", lineHeight: 1.45 },
-  riskBox: { flex: 1, backgroundColor: "#fef2f2", borderRadius: 5, padding: 8 },
-  riskLabel: { fontSize: 7, color: "#dc2626", fontFamily: "Helvetica-Bold", marginBottom: 3 },
-  riskText:  { fontSize: 8, color: "#7f1d1d", lineHeight: 1.45 },
-  analysisBox: { backgroundColor: "rgba(0,0,0,0.03)", borderRadius: 5, padding: 8, marginBottom: 6 },
-
-  // Table
-  tableHeader: {
-    flexDirection: "row", backgroundColor: "#f9fafb",
-    paddingVertical: 6, paddingHorizontal: 8,
-    borderTopLeftRadius: 5, borderTopRightRadius: 5,
-    borderWidth: 1, borderColor: "#e5e7eb",
-  },
-  tableRow: {
-    flexDirection: "row", paddingVertical: 5, paddingHorizontal: 8,
-    borderLeftWidth: 1, borderRightWidth: 1, borderBottomWidth: 1, borderColor: "#e5e7eb",
-  },
-  tableRowAlt: { backgroundColor: "#f9fafb" },
-  tableCell: { fontSize: 8, color: "#374151", lineHeight: 1.3 },
-  tableCellBold: { fontSize: 8, fontFamily: "Helvetica-Bold", color: "#111827" },
-
-  // Roadmap
-  roadmapItem: { flexDirection: "row", alignItems: "flex-start", marginBottom: 10, gap: 10 },
-  roadmapBadge: {
-    fontSize: 7, fontFamily: "Helvetica-Bold",
-    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, minWidth: 55, textAlign: "center",
-  },
-  roadmapBadge1: { backgroundColor: "#dcfce7", color: "#166534" },
-  roadmapBadge2: { backgroundColor: "#dbeafe", color: "#1d4ed8" },
-  roadmapBadge3: { backgroundColor: "#f3e8ff", color: "#7e22ce" },
-  roadmapText: { fontSize: 9, color: "#374151", flex: 1, lineHeight: 1.5 },
-
-  // Divider
-  divider: { borderBottomWidth: 1, borderBottomColor: "#e5e7eb", marginVertical: 12 },
-
-  // TOC
-  tocRow: { flexDirection: "row", alignItems: "center", marginBottom: 7 },
-  tocDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#4f46e5", marginRight: 10 },
-  tocTitle: { fontSize: 10, color: "#374151", flex: 1 },
-  tocSub: { fontSize: 8, color: "#9ca3af" },
-
-  // Checklist coverage
-  catHeader: {
-    flexDirection: "row", alignItems: "center",
-    backgroundColor: "#4f46e5",
-    paddingVertical: 5, paddingHorizontal: 8, borderRadius: 4,
-    marginTop: 10, marginBottom: 0, gap: 6,
-  },
-  catHeaderText: { fontSize: 8, fontFamily: "Helvetica-Bold", color: "#ffffff", flex: 1 },
-  catHeaderCount: { fontSize: 7, color: "rgba(255,255,255,0.75)" },
-  catAllClearBadge: {
-    fontSize: 6, fontFamily: "Helvetica-Bold",
-    backgroundColor: "rgba(255,255,255,0.25)", color: "#ffffff",
-    paddingHorizontal: 5, paddingVertical: 2, borderRadius: 3,
-  },
-  checkColHeader: {
-    flexDirection: "row", alignItems: "center",
-    backgroundColor: "#f9fafb",
-    paddingVertical: 3, paddingHorizontal: 6,
-    borderBottomWidth: 1, borderBottomColor: "#e5e7eb", gap: 6,
-  },
-  checkColHeaderText: { fontSize: 6, fontFamily: "Helvetica-Bold", color: "#9ca3af", textTransform: "uppercase" },
-  checkRow: {
-    flexDirection: "row", alignItems: "flex-start",
-    paddingVertical: 3, paddingHorizontal: 6,
-    borderBottomWidth: 1, borderBottomColor: "#f3f4f6", gap: 6,
-  },
-  checkRowAlt: { backgroundColor: "#fafafa" },
-  checkRowFlagged: { backgroundColor: "#fffbeb" },
-  checkId: { fontSize: 7, color: "#9ca3af", width: 26, paddingTop: 1 },
-  checkTextCol: { flex: 1 },
-  checkText: { fontSize: 7, color: "#374151", lineHeight: 1.35 },
-  checkFindingNote: { fontSize: 6, color: "#b45309", lineHeight: 1.3, marginTop: 2, fontFamily: "Helvetica-Oblique" },
-  roleBadge: {
-    fontSize: 6, fontFamily: "Helvetica-Bold",
-    paddingHorizontal: 4, paddingVertical: 2, borderRadius: 3, width: 28, textAlign: "center",
-  },
-  checkBadge: {
-    fontSize: 6, fontFamily: "Helvetica-Bold",
-    paddingHorizontal: 4, paddingVertical: 2, borderRadius: 3, width: 55, textAlign: "center",
-  },
-  checkPass: { fontSize: 6, color: "#d1d5db", width: 55, textAlign: "center", paddingTop: 2 },
-  howToReadBox: {
-    backgroundColor: "#f8f7ff", borderRadius: 6, padding: 10,
-    borderLeftWidth: 3, borderLeftColor: "#4f46e5", marginBottom: 10,
-  },
-  howToReadTitle: { fontSize: 8, fontFamily: "Helvetica-Bold", color: "#4f46e5", marginBottom: 5 },
-  howToReadGrid: { flexDirection: "row", gap: 10 },
-  howToReadCol: { flex: 1, gap: 3 },
-  howToReadRow: { flexDirection: "row", alignItems: "flex-start", gap: 5 },
-  howToReadRolePill: {
-    fontSize: 6, fontFamily: "Helvetica-Bold",
-    paddingHorizontal: 4, paddingVertical: 2, borderRadius: 3, minWidth: 24, textAlign: "center",
-  },
-  howToReadText: { fontSize: 7, color: "#374151", flex: 1, lineHeight: 1.3 },
-  roleLegendRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 6, flexWrap: "wrap" },
-  roleLegendItem: { flexDirection: "row", alignItems: "center", gap: 4 },
-  roleLegendLabel: { fontSize: 6, color: "#6b7280" },
+  tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 3, marginTop: 4 },
 });
 
-// ============================================================
+// ─────────────────────────────────────────────────────────────
 // TYPES
-// ============================================================
-interface ReportFinding {
+// ─────────────────────────────────────────────────────────────
+export interface ReportFinding {
   title: string;
   description: string | null;
   severity: "critical" | "high" | "medium" | "low";
@@ -314,9 +346,9 @@ export interface ReportData {
   preparer_name?: string;
 }
 
-// ============================================================
-// HELPERS
-// ============================================================
+// ─────────────────────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────────────────────
 const CATEGORY_NAMES: Record<string, string> = {
   "01": "Visibility of System State",
   "02": "Match Between System & Real World",
@@ -332,1073 +364,776 @@ const CATEGORY_NAMES: Record<string, string> = {
   "12": "Trust, Privacy and Data UX",
 };
 
-function getScoreColor(score: number | null): string {
-  if (!score) return "#6b7280";
-  if (score >= 80) return "#16a34a";
-  if (score >= 60) return "#ca8a04";
-  if (score >= 40) return "#ea580c";
-  return "#dc2626";
+const SEVERITY_WEIGHTS: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
+const RISK_UNIT_VALUE = 1000; // $1,000 per risk unit (Impact × Frequency × Severity Weight)
+
+const TOTAL_CRITERIA = HEURISTIC_CHECKLIST.categories.reduce((s, c) => s + c.item_count, 0);
+
+// ─────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────
+function formatDate(d: string | null) {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+}
+
+function formatCurrency(n: number) {
+  return "$" + n.toLocaleString("en-US");
+}
+
+function truncate(s: string, len: number) {
+  return s.length > len ? s.slice(0, len) + "…" : s;
 }
 
 function getBarColor(score: number | null): string {
-  if (!score) return "#d1d5db";
-  if (score >= 80) return "#22c55e";
-  if (score >= 60) return "#eab308";
-  if (score >= 40) return "#f97316";
-  return "#ef4444";
+  if (!score) return C.slate300;
+  if (score >= 80) return C.green600;
+  if (score >= 60) return C.yellow600;
+  if (score >= 40) return C.orange600;
+  return C.red600;
 }
 
-function getSeverityColors(severity: string): { bg: string; color: string } {
+function getScoreColor(score: number | null): string {
+  if (!score) return C.slate500;
+  if (score >= 80) return C.green600;
+  if (score >= 60) return C.yellow600;
+  if (score >= 40) return C.orange600;
+  return C.red600;
+}
+
+function getHealthLevel(score: number | null): { label: string; bg: string; color: string } {
+  if (!score) return { label: "Not Scored", bg: C.slate700, color: C.slate300 };
+  if (score >= 90) return { label: "Excellent",  bg: "#14532d", color: "#86efac" };
+  if (score >= 75) return { label: "Good",       bg: "#166534", color: "#4ade80" };
+  if (score >= 60) return { label: "Fair",       bg: "#854d0e", color: "#fde047" };
+  if (score >= 40) return { label: "Poor",       bg: "#7c2d12", color: "#fb923c" };
+  return                    { label: "Critical",  bg: "#7f1d1d", color: "#f87171" };
+}
+
+function calcFindingRisk(f: ReportFinding): number {
+  return (f.impact_score ?? 3) * (f.frequency_score ?? 3) * (SEVERITY_WEIGHTS[f.severity] ?? 1) * RISK_UNIT_VALUE;
+}
+
+function getItemCategoryNum(itemId: string | null): string | null {
+  if (!itemId) return null;
+  const n = parseInt(itemId.split(".")[0], 10);
+  if (isNaN(n)) return null;
+  return n.toString().padStart(2, "0");
+}
+
+function getFailureCardStyle(severity: string) {
   switch (severity) {
-    case "critical": return { bg: "#fee2e2", color: "#dc2626" };
-    case "high":     return { bg: "#ffedd5", color: "#ea580c" };
-    case "medium":   return { bg: "#fef9c3", color: "#ca8a04" };
-    default:         return { bg: "#dcfce7", color: "#16a34a" };
+    case "critical": return S.failureCardCritical;
+    case "high":     return S.failureCardHigh;
+    case "medium":   return S.failureCardMedium;
+    default:         return S.failureCardLow;
   }
 }
 
-function getFindingCardStyle(severity: string) {
+function getSeverityPillStyle(severity: string) {
   switch (severity) {
-    case "critical": return { card: styles.findingCritical, badge: styles.badgeCritical };
-    case "high":     return { card: styles.findingHigh,     badge: styles.badgeHigh };
-    case "medium":   return { card: styles.findingMedium,   badge: styles.badgeMedium };
-    default:         return { card: styles.findingLow,       badge: styles.badgeLow };
+    case "critical": return S.pillCritical;
+    case "high":     return S.pillHigh;
+    case "medium":   return S.pillMedium;
+    default:         return S.pillLow;
   }
 }
 
-function getCheckBadgeColors(severity: string): { bg: string; color: string } {
-  switch (severity) {
-    case "critical": return { bg: "#fee2e2", color: "#dc2626" };
-    case "high":     return { bg: "#ffedd5", color: "#ea580c" };
-    case "medium":   return { bg: "#fef9c3", color: "#ca8a04" };
-    default:         return { bg: "#dcfce7", color: "#16a34a" };
-  }
-}
-
-function getRoleStyle(role: string): { bg: string; color: string } {
-  switch (role) {
-    case "UX":  return { bg: "#f3e8ff", color: "#7e22ce" };
-    case "Dev": return { bg: "#dbeafe", color: "#1d4ed8" };
-    case "BA":  return { bg: "#ffedd5", color: "#c2410c" };
-    case "QA":  return { bg: "#dcfce7", color: "#166534" };
-    default:    return { bg: "#f3f4f6", color: "#374151" };
-  }
-}
-
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-}
-
-function truncate(str: string, len: number): string {
-  return str.length > len ? str.slice(0, len) + "..." : str;
-}
-
-// ============================================================
+// ─────────────────────────────────────────────────────────────
 // PAGE CHROME
-// ============================================================
-function PageHeader({ title, sub }: { title: string; sub?: string }) {
+// ─────────────────────────────────────────────────────────────
+function LightHeader({ right }: { right: string }) {
   return (
-    <View style={styles.pageHeader}>
-      <Text style={styles.pageHeaderTitle}>FUSION UX AUDIT REPORT</Text>
-      <Text style={styles.pageHeaderSub}>{sub ?? title}</Text>
+    <View style={S.runningHeader}>
+      <Text style={S.runningHeaderLeft}>FUSION UX  ·  UX AUDIT REPORT</Text>
+      <Text style={S.runningHeaderRight}>{right}</Text>
     </View>
   );
 }
 
-function PageFooter({ auditName, pageNum }: { auditName: string; pageNum: string }) {
+function Footer({ auditName, page }: { auditName: string; page: string }) {
   return (
-    <View style={styles.pageFooter}>
-      <Text>Fusion UX — {auditName}</Text>
-      <Text>Page {pageNum} · Confidential</Text>
-      <Text>Generated {new Date().toLocaleDateString()}</Text>
+    <View style={S.footer}>
+      <Text style={S.footerText}>{auditName}</Text>
+      <Text style={S.footerBrand}>FUSION UX</Text>
+      <Text style={S.footerText}>Page {page}  ·  Confidential</Text>
     </View>
   );
 }
 
-// ============================================================
-// SCORE DOTS
-// ============================================================
-function ScoreDots({ score, color }: { score: number; color: string }) {
-  return (
-    <View style={styles.dotsRow}>
-      {[1, 2, 3, 4, 5].map((i) => (
-        <View
-          key={i}
-          style={{
-            width: 6, height: 6, borderRadius: 3,
-            backgroundColor: i <= score ? color : "#e5e7eb",
-          }}
-        />
-      ))}
-    </View>
-  );
-}
-
-// ============================================================
-// FULL FINDING CARD
-// ============================================================
-function FindingCard({ finding, index }: { finding: ReportFinding; index: number }) {
-  const sev = getSeverityColors(finding.severity);
-  const sevCard = getFindingCardStyle(finding.severity);
-  const priorityScore = (finding.impact_score ?? 0) * (finding.frequency_score ?? 0);
+// ─────────────────────────────────────────────────────────────
+// FAILURE DETAIL CARD (inside category chapter)
+// ─────────────────────────────────────────────────────────────
+function FailureDetail({ finding, globalIndex }: { finding: ReportFinding; globalIndex: number }) {
+  const checklistItem = HEURISTIC_CHECKLIST.categories
+    .flatMap((c) => c.items)
+    .find((i) => i.id === finding.heuristic_item_id);
 
   return (
-    <View style={[styles.findingCard, sevCard.card]}>
-      {/* ── Header ── */}
-      <View style={styles.findingHeader}>
-        <View style={styles.findingTitleBlock}>
-          <View style={styles.findingBadgeRow}>
-            <Text style={[styles.findingBadge, sevCard.badge]}>{finding.severity.toUpperCase()}</Text>
-            {finding.heuristic_item_id && (
-              <Text style={styles.idBadge}>Check {finding.heuristic_item_id}</Text>
-            )}
-            {priorityScore > 0 && (
-              <Text style={styles.priorityBadge}>Priority {priorityScore}/25</Text>
-            )}
-          </View>
-          <Text style={styles.findingTitle}>#{index + 1} — {finding.title}</Text>
-        </View>
-
-        {/* Impact / frequency dots */}
-        <View style={styles.scoreDotsRow}>
-          {finding.impact_score != null && (
-            <View>
-              <Text style={styles.scoreDotLabel}>Impact</Text>
-              <ScoreDots score={finding.impact_score} color={sev.color} />
-            </View>
-          )}
-          {finding.frequency_score != null && (
-            <View>
-              <Text style={styles.scoreDotLabel}>Frequency</Text>
-              <ScoreDots score={finding.frequency_score} color="#94a3b8" />
-            </View>
-          )}
-        </View>
-      </View>
-
-      {/* ── Meta strip ── */}
-      <View style={styles.metaStrip}>
-        {finding.heuristic_category && (
-          <Text style={styles.metaItem}>
-            <Text style={styles.metaBold}>Category: </Text>{finding.heuristic_category}
+    <View style={[S.failureCard, getFailureCardStyle(finding.severity)]}>
+      {/* Header row */}
+      <View style={S.failureTopRow}>
+        <View style={{ flex: 1, marginRight: 8 }}>
+          <Text style={S.failureCriterionId}>
+            {finding.heuristic_item_id
+              ? `Criterion ${finding.heuristic_item_id} — ${CATEGORY_NAMES[getItemCategoryNum(finding.heuristic_item_id) ?? ""] ?? finding.heuristic_category ?? "Uncategorised"}`
+              : finding.heuristic_category ?? "Uncategorised"}
           </Text>
-        )}
-        {finding.location && (
-          <Text style={styles.metaItem}>
-            <Text style={styles.metaBold}>Location: </Text>{finding.location}
+          <Text style={S.failureTitle}>{finding.title}</Text>
+        </View>
+        <View style={{ alignItems: "flex-end", gap: 3 }}>
+          <Text style={[S.severityPill, getSeverityPillStyle(finding.severity)]}>
+            {finding.severity.toUpperCase()}
           </Text>
-        )}
-        <Text style={styles.metaItem}>
-          <Text style={styles.metaBold}>Status: </Text>
-          {finding.verification_status === "verified" || finding.verification_status === "edited"
-            ? "Human Verified"
-            : "AI Identified"}
-        </Text>
-      </View>
-
-      {/* ── Why it violates UX principles ── */}
-      {finding.description && (
-        <View style={{ marginBottom: 7 }}>
-          <Text style={styles.fieldLabel}>Why this violates UX principles</Text>
-          <Text style={styles.fieldText}>{finding.description}</Text>
-        </View>
-      )}
-
-      {/* ── Critical analysis ── */}
-      {finding.critical_analysis && (
-        <View style={[styles.analysisBox, { marginBottom: 7 }]}>
-          <Text style={styles.fieldLabel}>Critical Analysis (Cognitive Load, Gestalt & Heuristic Reasoning)</Text>
-          <Text style={styles.fieldText}>{finding.critical_analysis}</Text>
-        </View>
-      )}
-
-      {/* ── WCAG + Design reference ── */}
-      {((finding.wcag_criteria && finding.wcag_criteria.length > 0) || finding.design_reference) && (
-        <View style={{ flexDirection: "row", gap: 10, marginBottom: 7 }}>
-          {finding.wcag_criteria && finding.wcag_criteria.length > 0 && (
-            <View style={{ flex: 1 }}>
-              <Text style={styles.fieldLabel}>WCAG 2.1 / 2.2 Criteria</Text>
-              <View style={styles.pillRow}>
-                {finding.wcag_criteria.map((w, i) => (
-                  <Text key={i} style={styles.wcagPill}>{w}</Text>
-                ))}
-              </View>
-            </View>
-          )}
-          {finding.design_reference && (
-            <View style={{ flex: 1 }}>
-              <Text style={styles.fieldLabel}>Design Pattern / Research Reference</Text>
-              <Text style={styles.fieldText}>{finding.design_reference}</Text>
-            </View>
-          )}
-        </View>
-      )}
-
-      {/* ── AI recommendation ── */}
-      {finding.ai_suggestion && (
-        <View style={styles.aiBox}>
-          <Text style={styles.aiBoxLabel}>AI RECOMMENDATION</Text>
-          <Text style={styles.aiBoxText}>{finding.ai_suggestion}</Text>
-        </View>
-      )}
-
-      {/* ── Business impact + financial risk ── */}
-      {(finding.business_impact || finding.financial_risk) && (
-        <View style={{ flexDirection: "row", gap: 6, marginTop: 7 }}>
-          {finding.business_impact && (
-            <View style={styles.impactBox}>
-              <Text style={styles.impactLabel}>BUSINESS IMPACT</Text>
-              <Text style={styles.impactText}>{finding.business_impact}</Text>
-            </View>
-          )}
-          {finding.financial_risk && (
-            <View style={styles.riskBox}>
-              <Text style={styles.riskLabel}>FINANCIAL / COMPLIANCE RISK</Text>
-              <Text style={styles.riskText}>{finding.financial_risk}</Text>
-            </View>
-          )}
-        </View>
-      )}
-
-      {/* ── Tags ── */}
-      {finding.tags && finding.tags.length > 0 && (
-        <View style={[styles.pillRow, { marginTop: 7 }]}>
-          {finding.tags.map((tag, i) => (
-            <Text key={i} style={styles.tagPill}>#{tag}</Text>
-          ))}
-        </View>
-      )}
-    </View>
-  );
-}
-
-// ============================================================
-// COMPACT FINDING CARD (medium / low — 2 per page)
-// ============================================================
-function CompactFindingCard({ finding, index }: { finding: ReportFinding; index: number }) {
-  const sev = getSeverityColors(finding.severity);
-  const sevCard = getFindingCardStyle(finding.severity);
-  const priorityScore = (finding.impact_score ?? 0) * (finding.frequency_score ?? 0);
-
-  return (
-    <View style={[styles.findingCard, sevCard.card]}>
-      <View style={styles.findingHeader}>
-        <View style={styles.findingTitleBlock}>
-          <View style={styles.findingBadgeRow}>
-            <Text style={[styles.findingBadge, sevCard.badge]}>{finding.severity.toUpperCase()}</Text>
-            {finding.heuristic_item_id && <Text style={styles.idBadge}>Check {finding.heuristic_item_id}</Text>}
-            {priorityScore > 0 && <Text style={styles.priorityBadge}>Priority {priorityScore}/25</Text>}
-          </View>
-          <Text style={styles.findingTitle}>#{index + 1} — {finding.title}</Text>
-        </View>
-        <View style={styles.scoreDotsRow}>
-          {finding.impact_score != null && (
-            <View>
-              <Text style={styles.scoreDotLabel}>Impact</Text>
-              <ScoreDots score={finding.impact_score} color={sev.color} />
-            </View>
+          {(finding.impact_score != null && finding.frequency_score != null) && (
+            <Text style={{ fontSize: 6, color: C.slate500 }}>
+              Priority {finding.impact_score * finding.frequency_score}/25
+            </Text>
           )}
         </View>
       </View>
 
-      <View style={styles.metaStrip}>
-        {finding.heuristic_category && (
-          <Text style={styles.metaItem}><Text style={styles.metaBold}>Category: </Text>{finding.heuristic_category}</Text>
-        )}
-        {finding.location && (
-          <Text style={styles.metaItem}><Text style={styles.metaBold}>Location: </Text>{finding.location}</Text>
-        )}
-      </View>
+      {/* Visual evidence */}
+      {finding.location && (
+        <View style={S.evidenceBox}>
+          <Text style={S.evidenceLabel}>VISUAL EVIDENCE</Text>
+          <Text style={S.evidenceText}>{finding.location}</Text>
+        </View>
+      )}
 
-      {finding.description && (
+      {/* Original checklist criterion text */}
+      {checklistItem && (
         <View style={{ marginBottom: 6 }}>
-          <Text style={styles.fieldLabel}>Issue description</Text>
-          <Text style={styles.fieldText}>{finding.description}</Text>
+          <Text style={S.fieldLabel}>CRITERION TEXT</Text>
+          <Text style={[S.fieldText, { fontSize: 7, color: C.slate500, fontFamily: "Helvetica-Oblique" }]}>
+            "{checklistItem.text}"
+          </Text>
         </View>
       )}
 
-      {finding.critical_analysis && (
-        <View style={[styles.analysisBox, { marginBottom: 6 }]}>
-          <Text style={styles.fieldLabel}>Critical Analysis</Text>
-          <Text style={styles.fieldText}>{finding.critical_analysis}</Text>
+      {/* Heuristic analysis */}
+      {(finding.description || finding.critical_analysis) && (
+        <View style={{ marginBottom: 6 }}>
+          <Text style={S.fieldLabel}>HEURISTIC ANALYSIS</Text>
+          {finding.description && (
+            <Text style={S.fieldText}>{finding.description}</Text>
+          )}
+          {finding.critical_analysis && (
+            <Text style={[S.fieldText, { marginTop: 5, color: C.slate600 }]}>
+              {finding.critical_analysis}
+            </Text>
+          )}
         </View>
       )}
 
+      {/* WCAG criteria */}
       {finding.wcag_criteria && finding.wcag_criteria.length > 0 && (
-        <View style={{ marginBottom: 6 }}>
-          <Text style={styles.fieldLabel}>WCAG Criteria</Text>
-          <View style={styles.pillRow}>
-            {finding.wcag_criteria.map((w, i) => <Text key={i} style={styles.wcagPill}>{w}</Text>)}
-          </View>
+        <View style={S.wcagRow}>
+          <Text style={S.wcagLabel}>WCAG:</Text>
+          {finding.wcag_criteria.map((w, i) => (
+            <Text key={i} style={S.wcagPill}>{w}</Text>
+          ))}
+          {finding.design_reference && (
+            <Text style={{ fontSize: 7, color: C.slate500, flex: 1, marginLeft: 6, fontFamily: "Helvetica-Oblique" }}>
+              Ref: {truncate(finding.design_reference, 60)}
+            </Text>
+          )}
         </View>
       )}
 
+      {/* AI remediation */}
       {finding.ai_suggestion && (
-        <View style={styles.aiBox}>
-          <Text style={styles.aiBoxLabel}>AI RECOMMENDATION</Text>
-          <Text style={styles.aiBoxText}>{finding.ai_suggestion}</Text>
+        <View style={S.remediationBox}>
+          <Text style={S.remediationLabel}>AI-GENERATED REMEDIATION STRATEGY</Text>
+          <Text style={S.remediationText}>{finding.ai_suggestion}</Text>
         </View>
       )}
 
+      {/* Business / financial impact */}
       {(finding.business_impact || finding.financial_risk) && (
-        <View style={{ flexDirection: "row", gap: 6, marginTop: 6 }}>
+        <View style={S.twoCol}>
           {finding.business_impact && (
-            <View style={styles.impactBox}>
-              <Text style={styles.impactLabel}>BUSINESS IMPACT</Text>
-              <Text style={styles.impactText}>{finding.business_impact}</Text>
+            <View style={[S.col, { backgroundColor: "#fff7ed", borderRadius: 4, padding: 6, marginTop: 6 }]}>
+              <Text style={{ fontSize: 6, fontFamily: "Helvetica-Bold", color: C.orange600, marginBottom: 2 }}>BUSINESS IMPACT</Text>
+              <Text style={{ fontSize: 7, color: "#7c2d12", lineHeight: 1.4 }}>{finding.business_impact}</Text>
             </View>
           )}
           {finding.financial_risk && (
-            <View style={styles.riskBox}>
-              <Text style={styles.riskLabel}>FINANCIAL RISK</Text>
-              <Text style={styles.riskText}>{finding.financial_risk}</Text>
+            <View style={[S.col, { backgroundColor: C.red50, borderRadius: 4, padding: 6, marginTop: 6 }]}>
+              <Text style={{ fontSize: 6, fontFamily: "Helvetica-Bold", color: C.red600, marginBottom: 2 }}>FINANCIAL / COMPLIANCE RISK</Text>
+              <Text style={{ fontSize: 7, color: "#7f1d1d", lineHeight: 1.4 }}>{finding.financial_risk}</Text>
             </View>
           )}
         </View>
       )}
 
-      {finding.design_reference && (
-        <View style={{ marginTop: 6 }}>
-          <Text style={styles.fieldLabel}>Design Reference</Text>
-          <Text style={[styles.fieldText, { fontSize: 7 }]}>{finding.design_reference}</Text>
-        </View>
-      )}
-
+      {/* Tags */}
       {finding.tags && finding.tags.length > 0 && (
-        <View style={[styles.pillRow, { marginTop: 6 }]}>
-          {finding.tags.map((tag, i) => <Text key={i} style={styles.tagPill}>#{tag}</Text>)}
+        <View style={S.tagRow}>
+          {finding.tags.map((t, i) => <Text key={i} style={S.tag}>#{t}</Text>)}
         </View>
       )}
     </View>
   );
 }
 
-// ============================================================
-// MAIN PDF DOCUMENT
-// ============================================================
+// ─────────────────────────────────────────────────────────────
+// MAIN DOCUMENT
+// ─────────────────────────────────────────────────────────────
 export function ReportDocument({ data }: { data: ReportData }) {
   const { audit, findings, executive_summary, roi_analysis, roadmap, organization_name, preparer_name } = data;
+
   const totalIssues = audit.critical_count + audit.high_count + audit.medium_count + audit.low_count;
-  const verifiedFindings = findings.filter((f) => f.verification_status === "verified" || f.verification_status === "edited");
+  const catScores = audit.category_scores ?? {};
 
-  const criticalFindings = findings.filter((f) => f.severity === "critical");
-  const highFindings     = findings.filter((f) => f.severity === "high");
-  const mediumFindings   = findings.filter((f) => f.severity === "medium");
-  const lowFindings      = findings.filter((f) => f.severity === "low");
-
-  // Build finding map for checklist pages
+  // Build finding maps
+  const findingsByCategory = new Map<string, ReportFinding[]>();
   const findingMap = new Map<string, { severity: string; title: string }>();
   for (const f of findings) {
     if (f.heuristic_item_id) {
       findingMap.set(f.heuristic_item_id, { severity: f.severity, title: f.title });
+      const catNum = getItemCategoryNum(f.heuristic_item_id);
+      if (catNum) {
+        if (!findingsByCategory.has(catNum)) findingsByCategory.set(catNum, []);
+        findingsByCategory.get(catNum)!.push(f);
+        continue;
+      }
+    }
+    // Fallback: match by category name
+    if (f.heuristic_category) {
+      const match = Object.entries(CATEGORY_NAMES).find(([, name]) =>
+        name.toLowerCase().includes(f.heuristic_category!.toLowerCase().split(" ")[0]) ||
+        f.heuristic_category!.toLowerCase().includes(name.toLowerCase().split(" ")[0])
+      );
+      if (match) {
+        if (!findingsByCategory.has(match[0])) findingsByCategory.set(match[0], []);
+        findingsByCategory.get(match[0])!.push(f);
+      }
     }
   }
-  const checklistHalves = [
-    HEURISTIC_CHECKLIST.categories.slice(0, 6),
-    HEURISTIC_CHECKLIST.categories.slice(6),
-  ];
 
-  // Category scores
-  const catScores = audit.category_scores ?? {};
+  // Financial risk
+  const totalFinancialRisk = findings.reduce((sum, f) => sum + calcFindingRisk(f), 0);
+  const verifiedCount = findings.filter(
+    (f) => f.verification_status === "verified" || f.verification_status === "edited"
+  ).length;
 
-  // Page counter (approximate — react-pdf doesn't support dynamic refs)
-  let pg = 1;
-  const nextPg = () => String(++pg);
+  // Page counter (approximate — react-pdf has no dynamic refs)
+  const catStartPage = 4;
 
   return (
-    <Document title={`Fusion UX Report — ${audit.name}`} author="Fusion UX Platform" subject="UX Audit Report">
+    <Document
+      title={`Fusion UX Report — ${audit.name}`}
+      author="Fusion UX Platform"
+      subject="UX Audit Report"
+    >
 
-      {/* ══════════════════════════════════════════════════════
-          PAGE 1 — COVER
-      ══════════════════════════════════════════════════════ */}
-      <Page size="A4" style={[styles.page, styles.coverPage]}>
-        <View style={styles.coverLogo}>
-          <Text style={{ fontSize: 26, color: "#ffffff", fontFamily: "Helvetica-Bold" }}>F</Text>
-        </View>
-        <Text style={styles.coverTitle}>UX Audit Report</Text>
-        <Text style={styles.coverSubtitle}>{audit.name}</Text>
-
-        <View style={styles.coverMeta}>
-          {[
-            ["Organisation",  organization_name ?? "—"],
-            ["Prepared by",   preparer_name ?? "Fusion UX Platform"],
-            ["Audit type",    audit.audit_type.toUpperCase()],
-            ["Device",        audit.device_type.toUpperCase()],
-            ["Target URL",    audit.target_url ?? "Screenshot-based audit"],
-            ["Date",          formatDate(audit.created_at)],
-            ["Completed",     formatDate(audit.completed_at)],
-            ["Total issues",  String(totalIssues)],
-            ["Human verified",String(verifiedFindings.length) + " findings"],
-          ].map(([label, value]) => (
-            <View key={label} style={styles.coverMetaRow}>
-              <Text style={styles.coverMetaLabel}>{label}</Text>
-              <Text style={styles.coverMetaValue}>{value}</Text>
+      {/* ══════════════════════════════════════
+          PAGE 1 — DARK COVER
+      ══════════════════════════════════════ */}
+      <Page size="A4" style={S.darkPage}>
+        <View style={S.coverInner}>
+          {/* Top bar */}
+          <View style={S.coverTopBar}>
+            <View style={S.coverLogo}>
+              <Text style={S.coverLogoText}>F</Text>
             </View>
-          ))}
-        </View>
+            <Text style={S.coverBrand}>FUSION UX</Text>
+            <Text style={S.coverConfidential}>CONFIDENTIAL · NOT FOR DISTRIBUTION</Text>
+          </View>
 
-        <View style={styles.coverScoreRow}>
-          {[
-            { label: "Overall UX Score", value: audit.overall_score },
-            { label: "Heuristic Score",  value: audit.heuristic_score },
-            { label: "Accessibility",    value: audit.accessibility_score },
-            { label: "Critical Issues",  value: audit.critical_count },
-          ].map(({ label, value }) => (
-            <View key={label} style={styles.coverScoreCard}>
-              <Text style={styles.coverScoreNum}>{value ?? "—"}</Text>
-              <Text style={styles.coverScoreLabel}>{label}</Text>
+          {/* Title block */}
+          <View>
+            <Text style={S.coverReportType}>UX HEURISTIC AUDIT REPORT</Text>
+            <Text style={S.coverTitle}>{audit.name}</Text>
+            <Text style={S.coverSubtitle}>
+              {audit.target_url ?? "Screenshot-based audit"}  ·  {formatDate(audit.created_at)}
+            </Text>
+
+            {/* Metadata cards */}
+            <View style={S.coverMetaGrid}>
+              {[
+                { label: "ORGANISATION",   value: organization_name ?? "—" },
+                { label: "PREPARED BY",    value: preparer_name ?? "Fusion UX Platform" },
+                { label: "AUDIT TYPE",     value: audit.audit_type.toUpperCase() },
+                { label: "DEVICE",         value: audit.device_type?.toUpperCase() ?? "—" },
+              ].map(({ label, value }) => (
+                <View key={label} style={S.coverMetaCard}>
+                  <Text style={S.coverMetaLabel}>{label}</Text>
+                  <Text style={S.coverMetaValue}>{value}</Text>
+                </View>
+              ))}
             </View>
-          ))}
-        </View>
 
-        <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 7, marginTop: 28, textAlign: "center" }}>
-          CONFIDENTIAL — FUSION UX PLATFORM · {new Date().toLocaleDateString()}
-        </Text>
+            {/* Score tiles */}
+            <View style={S.coverScoreGrid}>
+              {[
+                { label: "UX HEALTH SCORE",   value: audit.overall_score },
+                { label: "HEURISTIC SCORE",   value: audit.heuristic_score },
+                { label: "ACCESSIBILITY",     value: audit.accessibility_score },
+                { label: "CRITICAL ISSUES",   value: audit.critical_count },
+                { label: "TOTAL FINDINGS",    value: totalIssues },
+                { label: "CRITERIA EVALUATED", value: TOTAL_CRITERIA },
+              ].map(({ label, value }) => (
+                <View key={label} style={S.coverScoreCard}>
+                  <Text style={[S.coverScoreNum, { color: typeof value === "number" && value <= 20 ? "#f87171" : C.white }]}>
+                    {value ?? "—"}
+                  </Text>
+                  <Text style={S.coverScoreLabel}>{label}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          {/* Bottom bar */}
+          <View style={S.coverBottomBar}>
+            <Text style={S.coverBottomText}>
+              Based on the Fusion UX {TOTAL_CRITERIA}-criterion heuristic framework across 12 categories
+            </Text>
+            <Text style={S.coverBottomText}>
+              Generated {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+            </Text>
+          </View>
+        </View>
       </Page>
 
-      {/* ══════════════════════════════════════════════════════
-          PAGE 2 — TABLE OF CONTENTS
-      ══════════════════════════════════════════════════════ */}
-      <Page size="A4" style={styles.page}>
-        <PageHeader title="Table of Contents" />
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Document Structure</Text>
-          <Text style={{ fontSize: 8, color: "#6b7280", marginBottom: 14, lineHeight: 1.5 }}>
-            This report is structured to serve multiple audiences. Pages 3–4 are for executives and project managers.
-            Pages 5 onwards are detailed findings for UX designers, developers, and QA engineers.
-            The checklist coverage section provides evidence for business analysts and compliance teams.
-          </Text>
+      {/* ══════════════════════════════════════
+          PAGE 2 — EXECUTIVE SUMMARY
+      ══════════════════════════════════════ */}
+      <Page size="A4" style={S.lightPage}>
+        <LightHeader right="Section 1 — Executive Summary" />
 
+        <Text style={S.sectionTitle}>SECTION 1 — EXECUTIVE SUMMARY</Text>
+
+        {/* Score band */}
+        <View style={S.scoreBand}>
           {[
-            { section: "1. Executive Summary",                  desc: "Overall scores, AI analysis, board-level narrative, top 3 priorities" },
-            { section: "2. Scores & Category Dashboard",        desc: "All 12 heuristic category scores, severity breakdown, verified issues" },
-            { section: "3. Critical Findings",                  desc: `${criticalFindings.length} findings — full detail including WCAG, cognitive analysis, business risk` },
-            { section: "4. High Priority Findings",             desc: `${highFindings.length} findings — full detail with AI recommendations and financial risk` },
-            { section: "5. Medium Priority Findings",           desc: `${mediumFindings.length} findings — detailed cards with design references and fix guidance` },
-            { section: "6. Low Priority Findings",              desc: `${lowFindings.length} findings — full detail with polish and consistency recommendations` },
-            { section: "7. Complete Findings Register",         desc: "All findings in tabular format — sortable reference for project tracking" },
-            { section: "8. ROI Analysis & Improvement Roadmap", desc: "30/60/90-day action plan, business case, estimated impact of fixes" },
-            { section: "9. Heuristic Checklist — Cat 01–06",   desc: "All 153 checks — flagged vs evaluated-clean, per role (UX/Dev/BA/QA)" },
-            { section: "10. Heuristic Checklist — Cat 07–12",  desc: "Continued checklist coverage with role-based guidance" },
-            { section: "11. Methodology & Framework",           desc: "How the audit was conducted, the 12-category framework, WCAG standards applied" },
-          ].map(({ section, desc }, i) => (
-            <View key={i} style={styles.tocRow}>
-              <View style={styles.tocDot} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.tocTitle}>{section}</Text>
-                <Text style={styles.tocSub}>{desc}</Text>
-              </View>
-            </View>
-          ))}
-        </View>
-
-        <View style={[styles.infoBox, { marginTop: 8 }]}>
-          <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: "#4f46e5", marginBottom: 4 }}>Who should read what</Text>
-          <Text style={{ fontSize: 8, color: "#374151", lineHeight: 1.5 }}>
-            {"PM / Exec:  Pages 3–4 (Executive Summary + Dashboard)\n"}
-            {"UX Designer:  Pages 5–8 (all findings, especially critical and high)\n"}
-            {"Developer:  Pages 5–9 (findings + AI recommendations + findings register)\n"}
-            {"QA Engineer:  Pages 5–10 (findings + checklist — test every FLAGGED row)\n"}
-            {"Business Analyst:  Pages 3 + 9–10 (priorities + checklist coverage against requirements)"}
-          </Text>
-        </View>
-
-        <PageFooter auditName={audit.name} pageNum="2" />
-      </Page>
-
-      {/* ══════════════════════════════════════════════════════
-          PAGE 3 — EXECUTIVE SUMMARY
-      ══════════════════════════════════════════════════════ */}
-      <Page size="A4" style={styles.page}>
-        <PageHeader title="Executive Summary" />
-
-        {/* Score cards */}
-        <View style={styles.scoreGrid}>
-          {[
-            { label: "Overall UX Score",  value: audit.overall_score,       style: styles.scoreCardPrimary },
-            { label: "Heuristic Score",   value: audit.heuristic_score,     style: styles.scoreCardGood },
-            { label: "Accessibility",     value: audit.accessibility_score,  style: styles.scoreCardWarn },
-            { label: "Critical Issues",   value: audit.critical_count,       style: styles.scoreCardDanger },
+            { label: "Overall UX Health Score", value: audit.overall_score,      style: S.scoreTilePrimary },
+            { label: "Heuristic Compliance",    value: audit.heuristic_score,    style: S.scoreTileGood },
+            { label: "Accessibility Score",     value: audit.accessibility_score, style: S.scoreTileWarn },
+            { label: "Critical Issues",         value: audit.critical_count,      style: S.scoreTileDanger },
           ].map(({ label, value, style }) => (
-            <View key={label} style={[styles.scoreCard, style]}>
-              <Text style={[styles.scoreNumber, { color: getScoreColor(typeof value === "number" ? value : null) }]}>
+            <View key={label} style={[S.scoreTile, style]}>
+              <Text style={[S.scoreTileNum, { color: getScoreColor(typeof value === "number" ? value : null) }]}>
                 {value ?? "—"}
               </Text>
-              <Text style={styles.scoreLabel}>{label}</Text>
+              <Text style={S.scoreTileLabel}>{label}</Text>
             </View>
           ))}
         </View>
 
-        {/* AI summary from original audit run */}
-        {audit.ai_summary && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>AI Analysis Summary</Text>
-            <View style={styles.infoBox}>
-              <Text style={styles.infoBoxText}>{audit.ai_summary}</Text>
+        {/* Financial risk */}
+        <View style={S.riskBox}>
+          <View>
+            <Text style={S.riskLabel}>TOTAL FINANCIAL / LEGAL RISK MITIGATED</Text>
+            <Text style={S.riskValue}>{formatCurrency(totalFinancialRisk)}</Text>
+            <Text style={S.riskFormula}>Formula: Impact × Frequency × Severity Weight × $1,000 per unit</Text>
+          </View>
+          <Text style={S.riskDesc}>
+            This figure represents the estimated annual exposure from the identified UX violations —
+            including conversion losses, accessibility legal risk (ADA / EAA), and user churn.
+            Remediating all findings eliminates this exposure. Severity weights: Critical ×4,
+            High ×3, Medium ×2, Low ×1.
+          </Text>
+        </View>
+
+        {/* Severity breakdown */}
+        <Text style={S.subsectionTitle}>FINDINGS BREAKDOWN BY SEVERITY</Text>
+        <View style={S.severityMatrix}>
+          {[
+            { label: "Critical", count: audit.critical_count, bg: C.red50,     color: C.red600,    border: C.red600 },
+            { label: "High",     count: audit.high_count,     bg: C.orange50,  color: C.orange600, border: C.orange600 },
+            { label: "Medium",   count: audit.medium_count,   bg: C.yellow50,  color: C.yellow600, border: C.yellow600 },
+            { label: "Low",      count: audit.low_count,      bg: C.green50,   color: C.green600,  border: C.green600 },
+          ].map(({ label, count, bg, color, border }) => (
+            <View key={label} style={[S.severityTile, { backgroundColor: bg, borderTopWidth: 3, borderTopColor: border }]}>
+              <Text style={[S.severityTileNum, { color }]}>{count}</Text>
+              <Text style={[S.severityTileLabel, { color }]}>{label}</Text>
+              <Text style={{ fontSize: 6, color: C.slate500, marginTop: 2 }}>
+                {totalIssues ? Math.round((count / totalIssues) * 100) : 0}% of total
+              </Text>
+            </View>
+          ))}
+        </View>
+        <Text style={{ fontSize: 7, color: C.slate500, marginBottom: 10 }}>
+          {TOTAL_CRITERIA} criteria evaluated · {totalIssues} violations found · {TOTAL_CRITERIA - totalIssues} criteria passed · {verifiedCount} human-verified
+        </Text>
+
+        {/* AI narrative */}
+        {(audit.ai_summary || executive_summary) && (
+          <View>
+            <Text style={S.subsectionTitle}>AI ANALYSIS — OVERVIEW</Text>
+            <View style={S.infoBox}>
+              <Text style={S.infoBoxText}>{audit.ai_summary ?? executive_summary}</Text>
             </View>
           </View>
         )}
 
-        {/* Board-level executive summary */}
+        {/* Board-level summary */}
         {(audit.executive_summary || executive_summary) && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Executive Summary</Text>
-            <Text style={styles.infoBoxText}>{audit.executive_summary ?? executive_summary}</Text>
+          <View>
+            <Text style={S.subsectionTitle}>BOARD-LEVEL ASSESSMENT</Text>
+            <Text style={[S.infoBoxText, { marginBottom: 10 }]}>
+              {audit.executive_summary ?? executive_summary}
+            </Text>
           </View>
         )}
 
-        {/* Top 3 priority issues */}
+        {/* Top priorities */}
         {audit.top_priority_issues && audit.top_priority_issues.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Top Priority Issues</Text>
+          <View>
+            <Text style={S.subsectionTitle}>TOP PRIORITY ISSUES REQUIRING IMMEDIATE ATTENTION</Text>
             {audit.top_priority_issues.map((issue, i) => (
-              <View key={i} style={{ flexDirection: "row", gap: 8, marginBottom: 8 }}>
-                <View style={{
-                  width: 20, height: 20, borderRadius: 10,
-                  backgroundColor: i === 0 ? "#dc2626" : i === 1 ? "#ea580c" : "#4f46e5",
-                  justifyContent: "center", alignItems: "center",
-                }}>
-                  <Text style={{ fontSize: 9, color: "#fff", fontFamily: "Helvetica-Bold" }}>{i + 1}</Text>
+              <View key={i} style={S.priorityItem}>
+                <View style={[S.priorityBullet, {
+                  backgroundColor: i === 0 ? C.red600 : i === 1 ? C.orange600 : C.indigo600,
+                }]}>
+                  <Text style={S.priorityBulletText}>{i + 1}</Text>
                 </View>
-                <Text style={{ fontSize: 9, color: "#374151", flex: 1, lineHeight: 1.5, paddingTop: 3 }}>{issue}</Text>
+                <Text style={S.priorityText}>{issue}</Text>
               </View>
             ))}
           </View>
         )}
 
-        <PageFooter auditName={audit.name} pageNum="3" />
+        <Footer auditName={audit.name} page="2" />
       </Page>
 
-      {/* ══════════════════════════════════════════════════════
-          PAGE 4 — SCORES DASHBOARD
-      ══════════════════════════════════════════════════════ */}
-      <Page size="A4" style={styles.page}>
-        <PageHeader title="Scores & Category Dashboard" />
+      {/* ══════════════════════════════════════
+          PAGE 3 — CATEGORY SCORES OVERVIEW
+      ══════════════════════════════════════ */}
+      <Page size="A4" style={S.lightPage}>
+        <LightHeader right="Section 2 — Category Scores Overview" />
 
-        {/* Issue count cards */}
-        <View style={styles.scoreGrid}>
-          {[
-            { label: "Critical", value: audit.critical_count, color: "#dc2626", bg: "#fef2f2" },
-            { label: "High",     value: audit.high_count,     color: "#ea580c", bg: "#fff7ed" },
-            { label: "Medium",   value: audit.medium_count,   color: "#ca8a04", bg: "#fefce8" },
-            { label: "Low",      value: audit.low_count,      color: "#16a34a", bg: "#f0fdf4" },
-          ].map(({ label, value, color, bg }) => (
-            <View key={label} style={[styles.scoreCard, { backgroundColor: bg }]}>
-              <Text style={[styles.scoreNumber, { color }]}>{value}</Text>
-              <Text style={styles.scoreLabel}>{label} issues</Text>
-            </View>
-          ))}
-        </View>
+        <Text style={S.sectionTitle}>SECTION 2 — CATEGORY-BY-CATEGORY DEEP DIVE</Text>
+        <Text style={{ fontSize: 9, color: C.slate600, marginBottom: 12, lineHeight: 1.5 }}>
+          The following pages provide a full audit chapter for each of the 12 evaluation categories.
+          Each chapter lists every violation with its precise criterion ID, heuristic analysis, and
+          AI-generated remediation strategy — plus a complete list of criteria that passed inspection.
+        </Text>
 
-        {/* Severity distribution */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Severity Distribution</Text>
-          {[
-            { label: "Critical", count: audit.critical_count, color: "#ef4444" },
-            { label: "High",     count: audit.high_count,     color: "#f97316" },
-            { label: "Medium",   count: audit.medium_count,   color: "#eab308" },
-            { label: "Low",      count: audit.low_count,      color: "#22c55e" },
-          ].map((item) => (
-            <View key={item.label} style={styles.severityRow}>
-              <Text style={styles.severityLabel}>{item.label}</Text>
-              <View style={{ flex: 1, height: 13, backgroundColor: "#f3f4f6", borderRadius: 4, overflow: "hidden" }}>
-                <View style={[styles.severityBar, {
-                  width: totalIssues ? `${(item.count / totalIssues) * 100}%` : "0%",
-                  backgroundColor: item.color,
+        {/* Score bars for all 12 categories */}
+        <Text style={S.subsectionTitle}>SCORE SUMMARY — ALL 12 CATEGORIES</Text>
+        {HEURISTIC_CHECKLIST.categories.map((cat) => {
+          const score = catScores[cat.number] ?? null;
+          const catFindings = findingsByCategory.get(cat.number) ?? [];
+          const health = getHealthLevel(score);
+          return (
+            <View key={cat.number} style={S.catScoreRow}>
+              <Text style={S.catScoreRowNum}>{cat.number}</Text>
+              <Text style={S.catScoreRowName}>{cat.name}</Text>
+              <View style={S.catScoreBarBg}>
+                <View style={[S.catScoreBarFill, {
+                  width: score ? `${score}%` : "0%",
+                  backgroundColor: getBarColor(score),
                 }]} />
               </View>
-              <Text style={styles.severityCount}>{item.count}</Text>
-            </View>
-          ))}
-          <Text style={{ fontSize: 7, color: "#9ca3af", marginTop: 4 }}>
-            Total: {totalIssues} issues · Human-verified: {verifiedFindings.length} of {findings.length}
-          </Text>
-        </View>
-
-        {/* 12-category scores */}
-        {Object.keys(catScores).length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>12-Category Heuristic Scores</Text>
-            {Object.entries(CATEGORY_NAMES).map(([num, name]) => {
-              const score = catScores[num] ?? null;
-              return (
-                <View key={num} style={styles.categoryRow}>
-                  <Text style={styles.categoryNum}>{num}</Text>
-                  <Text style={styles.categoryName}>{name}</Text>
-                  <View style={styles.categoryBarBg}>
-                    <View style={[styles.categoryBarFill, {
-                      width: score ? `${score}%` : "0%",
-                      backgroundColor: getBarColor(score),
-                    }]} />
-                  </View>
-                  <Text style={[styles.categoryScore, { color: getScoreColor(score) }]}>
-                    {score ?? "—"}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
-        )}
-
-        {/* Improvement roadmap from original AI audit */}
-        {audit.improvement_roadmap && audit.improvement_roadmap.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>AI-Generated Improvement Roadmap</Text>
-            {audit.improvement_roadmap.map((item, i) => {
-              const badges = [
-                { label: "30-Day", style: styles.roadmapBadge1 },
-                { label: "60-Day", style: styles.roadmapBadge2 },
-                { label: "90-Day", style: styles.roadmapBadge3 },
-              ];
-              const badge = badges[i] ?? badges[2];
-              return (
-                <View key={i} style={styles.roadmapItem}>
-                  <Text style={[styles.roadmapBadge, badge.style]}>{badge.label}</Text>
-                  <Text style={styles.roadmapText}>{item}</Text>
-                </View>
-              );
-            })}
-          </View>
-        )}
-
-        <PageFooter auditName={audit.name} pageNum="4" />
-      </Page>
-
-      {/* ══════════════════════════════════════════════════════
-          PAGES 5+ — CRITICAL FINDINGS (1 per page)
-      ══════════════════════════════════════════════════════ */}
-      {criticalFindings.map((finding, i) => (
-        <Page key={`crit-${i}`} size="A4" style={styles.page}>
-          <PageHeader title={`Critical Finding ${i + 1} of ${criticalFindings.length}`} />
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Critical Findings</Text>
-            <FindingCard finding={finding} index={findings.indexOf(finding)} />
-          </View>
-          <PageFooter auditName={audit.name} pageNum={String(5 + i)} />
-        </Page>
-      ))}
-
-      {/* ══════════════════════════════════════════════════════
-          HIGH FINDINGS (1 per page — all fields visible)
-      ══════════════════════════════════════════════════════ */}
-      {highFindings.map((finding, i) => (
-        <Page key={`high-${i}`} size="A4" style={styles.page}>
-          <PageHeader title={`High Priority Finding ${i + 1} of ${highFindings.length}`} />
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>High Priority Findings</Text>
-            <FindingCard finding={finding} index={findings.indexOf(finding)} />
-          </View>
-          <PageFooter auditName={audit.name} pageNum={String(5 + criticalFindings.length + i)} />
-        </Page>
-      ))}
-
-      {/* ══════════════════════════════════════════════════════
-          MEDIUM FINDINGS (1 per page — full compact card)
-      ══════════════════════════════════════════════════════ */}
-      {mediumFindings.map((finding, i) => (
-        <Page key={`med-${i}`} size="A4" style={styles.page}>
-          <PageHeader title={`Medium Priority Finding ${i + 1} of ${mediumFindings.length}`} />
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Medium Priority Findings</Text>
-            <CompactFindingCard finding={finding} index={findings.indexOf(finding)} />
-          </View>
-          <PageFooter auditName={audit.name} pageNum={String(5 + criticalFindings.length + highFindings.length + i)} />
-        </Page>
-      ))}
-
-      {/* ══════════════════════════════════════════════════════
-          LOW FINDINGS (1 per page)
-      ══════════════════════════════════════════════════════ */}
-      {lowFindings.map((finding, i) => (
-        <Page key={`low-${i}`} size="A4" style={styles.page}>
-          <PageHeader title={`Low Priority Finding ${i + 1} of ${lowFindings.length}`} />
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Low Priority Findings</Text>
-            <CompactFindingCard finding={finding} index={findings.indexOf(finding)} />
-          </View>
-          <PageFooter auditName={audit.name} pageNum={String(5 + criticalFindings.length + highFindings.length + mediumFindings.length + i)} />
-        </Page>
-      ))}
-
-      {/* ══════════════════════════════════════════════════════
-          COMPLETE FINDINGS REGISTER (table)
-      ══════════════════════════════════════════════════════ */}
-      <Page size="A4" style={styles.page}>
-        <PageHeader title="Complete Findings Register" />
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>All Findings — Quick Reference Table</Text>
-          <Text style={{ fontSize: 8, color: "#6b7280", marginBottom: 8 }}>
-            Use this table for project tracking, sprint planning, and handoff to development teams.
-            Priority score = Impact (1–5) × Frequency (1–5). Maximum: 25.
-          </Text>
-
-          {/* Table header */}
-          <View style={styles.tableHeader}>
-            <Text style={[styles.tableCellBold, { width: "4%" }]}>#</Text>
-            <Text style={[styles.tableCellBold, { width: "30%" }]}>Finding</Text>
-            <Text style={[styles.tableCellBold, { width: "10%" }]}>Severity</Text>
-            <Text style={[styles.tableCellBold, { width: "22%" }]}>Category</Text>
-            <Text style={[styles.tableCellBold, { width: "8%" }]}>Check</Text>
-            <Text style={[styles.tableCellBold, { width: "10%" }]}>Priority</Text>
-            <Text style={[styles.tableCellBold, { width: "10%" }]}>Status</Text>
-            <Text style={[styles.tableCellBold, { width: "6%" }]}>WCAG</Text>
-          </View>
-
-          {findings.map((f, i) => (
-            <View key={i} style={[styles.tableRow, i % 2 !== 0 ? styles.tableRowAlt : {}]}>
-              <Text style={[styles.tableCell, { width: "4%" }]}>{i + 1}</Text>
-              <Text style={[styles.tableCell, { width: "30%" }]}>{truncate(f.title, 45)}</Text>
-              <Text style={[styles.tableCell, { width: "10%", textTransform: "capitalize" }]}>{f.severity}</Text>
-              <Text style={[styles.tableCell, { width: "22%" }]}>{truncate(f.heuristic_category ?? "—", 30)}</Text>
-              <Text style={[styles.tableCell, { width: "8%" }]}>{f.heuristic_item_id ?? "—"}</Text>
-              <Text style={[styles.tableCell, { width: "10%" }]}>
-                {f.impact_score && f.frequency_score ? `${f.impact_score * f.frequency_score}/25` : "—"}
-              </Text>
-              <Text style={[styles.tableCell, { width: "10%", textTransform: "capitalize" }]}>
-                {f.verification_status === "verified" || f.verification_status === "edited" ? "Verified" : "AI"}
-              </Text>
-              <Text style={[styles.tableCell, { width: "6%" }]}>
-                {f.wcag_criteria && f.wcag_criteria.length > 0 ? `${f.wcag_criteria.length}` : "—"}
+              <Text style={[S.catScoreValue, { color: getScoreColor(score) }]}>{score ?? "—"}</Text>
+              <Text style={{ fontSize: 6, color: catFindings.length > 0 ? C.red600 : C.green600, width: 40, textAlign: "right" }}>
+                {catFindings.length > 0 ? `${catFindings.length} fail` : "Pass"}
               </Text>
             </View>
-          ))}
-        </View>
+          );
+        })}
 
-        {/* Summary stats */}
-        <View style={{ flexDirection: "row", gap: 10, marginTop: 8 }}>
-          {[
-            { label: "Total findings",    value: String(findings.length) },
-            { label: "Human verified",    value: String(verifiedFindings.length) },
-            { label: "With WCAG mapping", value: String(findings.filter(f => f.wcag_criteria && f.wcag_criteria.length > 0).length) },
-            { label: "With AI fix",       value: String(findings.filter(f => f.ai_suggestion).length) },
-          ].map(({ label, value }) => (
-            <View key={label} style={{ flex: 1, backgroundColor: "#f9fafb", borderRadius: 6, padding: 8, alignItems: "center" }}>
-              <Text style={{ fontSize: 14, fontFamily: "Helvetica-Bold", color: "#4f46e5" }}>{value}</Text>
-              <Text style={{ fontSize: 6, color: "#6b7280", textAlign: "center" }}>{label}</Text>
-            </View>
-          ))}
-        </View>
+        <View style={[S.divider, { marginTop: 16 }]} />
 
-        <PageFooter auditName={audit.name} pageNum={String(5 + findings.length)} />
-      </Page>
-
-      {/* ══════════════════════════════════════════════════════
-          ROI ANALYSIS & ROADMAP
-      ══════════════════════════════════════════════════════ */}
-      <Page size="A4" style={styles.page}>
-        <PageHeader title="ROI Analysis & Improvement Roadmap" />
-
+        {/* ROI summary if available */}
         {roi_analysis && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>ROI & Business Impact Analysis</Text>
-            <View style={styles.infoBox}>
-              <Text style={styles.infoBoxText}>{roi_analysis}</Text>
-            </View>
-            <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
-              {[
-                { label: "Critical Issues",  value: audit.critical_count, desc: "Immediate action required",  color: "#fef2f2", textColor: "#dc2626" },
-                { label: "High Risk Issues", value: audit.high_count,     desc: "Revenue impact risk",       color: "#fff7ed", textColor: "#ea580c" },
-                { label: "Human Verified",   value: verifiedFindings.length, desc: "Ready for dev team",    color: "#f0fdf4", textColor: "#16a34a" },
-                { label: "With WCAG Breach", value: findings.filter(f => f.wcag_criteria && f.wcag_criteria.length > 0).length, desc: "Compliance exposure", color: "#eef2ff", textColor: "#4f46e5" },
-              ].map(({ label, value, desc, color, textColor }) => (
-                <View key={label} style={{ flex: 1, backgroundColor: color, borderRadius: 8, padding: 10 }}>
-                  <Text style={{ fontSize: 18, fontFamily: "Helvetica-Bold", color: textColor }}>{value}</Text>
-                  <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: textColor, marginBottom: 2 }}>{label}</Text>
-                  <Text style={{ fontSize: 6, color: "#6b7280" }}>{desc}</Text>
-                </View>
-              ))}
+          <View style={{ marginTop: 12 }}>
+            <Text style={S.subsectionTitle}>ROI ANALYSIS</Text>
+            <View style={S.infoBox}>
+              <Text style={S.infoBoxText}>{roi_analysis}</Text>
             </View>
           </View>
         )}
 
-        {roadmap && roadmap.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Report-Level Improvement Roadmap</Text>
-            {roadmap.map((item, i) => {
-              const badges = [
-                { label: "30-Day",  style: styles.roadmapBadge1 },
-                { label: "60-Day",  style: styles.roadmapBadge2 },
-                { label: "90-Day",  style: styles.roadmapBadge3 },
+        {/* Improvement roadmap */}
+        {(audit.improvement_roadmap ?? roadmap) && (
+          <View style={{ marginTop: 8 }}>
+            <Text style={S.subsectionTitle}>IMPROVEMENT ROADMAP</Text>
+            {(audit.improvement_roadmap ?? roadmap ?? []).map((item, i) => {
+              const phases = [
+                { label: "30-DAY", bg: C.green50, color: C.green600 },
+                { label: "60-DAY", bg: C.blue50,  color: C.blue600 },
+                { label: "90-DAY", bg: C.purple50, color: C.purple700 },
               ];
-              const badge = badges[i] ?? badges[2];
+              const phase = phases[i] ?? phases[2];
               return (
-                <View key={i} style={styles.roadmapItem}>
-                  <Text style={[styles.roadmapBadge, badge.style]}>{badge.label}</Text>
-                  <Text style={styles.roadmapText}>{item}</Text>
+                <View key={i} style={{ flexDirection: "row", gap: 10, marginBottom: 7 }}>
+                  <Text style={{
+                    fontSize: 7, fontFamily: "Helvetica-Bold", paddingHorizontal: 8, paddingVertical: 3,
+                    borderRadius: 10, minWidth: 55, textAlign: "center",
+                    backgroundColor: phase.bg, color: phase.color,
+                  }}>{phase.label}</Text>
+                  <Text style={{ fontSize: 9, color: C.slate700, flex: 1, lineHeight: 1.5 }}>{item}</Text>
                 </View>
               );
             })}
           </View>
         )}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recommended Next Steps</Text>
-          {[
-            `Address ${audit.critical_count} critical issues immediately — these block users or create legal/accessibility compliance risk`,
-            `Schedule a UX design sprint within 30 days to address ${audit.high_count} high-priority friction points`,
-            `Assign ${findings.filter(f => f.wcag_criteria && f.wcag_criteria.length > 0).length} WCAG-mapped findings to development with acceptance criteria for each`,
-            `Re-run Fusion UX audit after each sprint to measure score improvement and track regression`,
-            "Present executive summary (Pages 3–4) to leadership to secure remediation budget",
-            "Use the checklist coverage pages (Pages 9–10) as QA sign-off criteria before next release",
-          ].map((step, i) => (
-            <View key={i} style={{ flexDirection: "row", gap: 8, marginBottom: 8 }}>
-              <Text style={{ fontSize: 9, color: "#4f46e5", fontFamily: "Helvetica-Bold", width: 14 }}>{i + 1}.</Text>
-              <Text style={{ fontSize: 9, color: "#374151", flex: 1, lineHeight: 1.5 }}>{step}</Text>
-            </View>
-          ))}
-        </View>
-
-        <PageFooter auditName={audit.name} pageNum={String(6 + findings.length)} />
+        <Footer auditName={audit.name} page="3" />
       </Page>
 
-      {/* ══════════════════════════════════════════════════════
-          HEURISTIC CHECKLIST COVERAGE (2 pages)
-      ══════════════════════════════════════════════════════ */}
-      {checklistHalves.map((cats, halfIdx) => {
-        const totalChecks = cats.reduce((sum, c) => sum + c.item_count, 0);
-        const flaggedChecks = cats.reduce(
-          (sum, c) => sum + c.items.filter((item) => findingMap.has(item.id)).length, 0
-        );
+      {/* ══════════════════════════════════════
+          PAGES 4–15 — CATEGORY DEEP DIVE (×12)
+      ══════════════════════════════════════ */}
+      {HEURISTIC_CHECKLIST.categories.map((cat, catIdx) => {
+        const catFindings = findingsByCategory.get(cat.number) ?? [];
+        const score = catScores[cat.number] ?? null;
+        const health = getHealthLevel(score);
+        const passedItems = cat.items.filter((item) => !findingMap.has(item.id));
+        const pageNum = catStartPage + catIdx;
+
         return (
-          <Page key={halfIdx} size="A4" style={styles.page}>
-            <PageHeader title={`Heuristic Checklist — ${halfIdx === 0 ? "Categories 01–06" : "Categories 07–12"}`} />
+          <Page key={cat.number} size="A4" style={S.lightPage}>
+            <LightHeader right={`Category ${cat.number} of 12 — ${cat.name}`} />
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                {halfIdx === 0 ? "Full Checklist Coverage — Part 1 of 2" : "Full Checklist Coverage — Part 2 of 2"}
-              </Text>
-
-              {/* How-to-read — first page only */}
-              {halfIdx === 0 && (
-                <View style={styles.howToReadBox}>
-                  <Text style={styles.howToReadTitle}>How to read this section</Text>
-                  <View style={styles.howToReadGrid}>
-                    <View style={styles.howToReadCol}>
-                      {[
-                        { role: "QA",  color: getRoleStyle("QA"),  text: "Test every FLAGGED row against the live product. Raise a defect if the issue persists." },
-                        { role: "Dev", color: getRoleStyle("Dev"), text: "Implement fixes for [Dev] or [All] FLAGGED rows. Refer to Pages 5+ for AI recommendations." },
-                      ].map(({ role, color, text }) => (
-                        <View key={role} style={styles.howToReadRow}>
-                          <Text style={[styles.howToReadRolePill, { backgroundColor: color.bg, color: color.color }]}>{role}</Text>
-                          <Text style={styles.howToReadText}>{text}</Text>
-                        </View>
-                      ))}
+            {/* Dark category chapter header */}
+            <View style={S.catChapter}>
+              <View style={S.catChapterLeft}>
+                <Text style={S.catChapterEyebrow}>CATEGORY {cat.number} OF 12</Text>
+                <Text style={S.catChapterName}>{cat.name}</Text>
+                <View style={S.catChapterStats}>
+                  {[
+                    { num: String(cat.item_count),    label: "Criteria" },
+                    { num: String(catFindings.length), label: "Failures",  color: catFindings.length > 0 ? "#f87171" : "#4ade80" },
+                    { num: String(passedItems.length), label: "Passed",    color: "#4ade80" },
+                  ].map(({ num, label, color }) => (
+                    <View key={label} style={S.catChapterStat}>
+                      <Text style={[S.catChapterStatNum, color ? { color } : {}]}>{num}</Text>
+                      <Text style={S.catChapterStatLabel}>{label}</Text>
                     </View>
-                    <View style={styles.howToReadCol}>
-                      {[
-                        { role: "UX",  color: getRoleStyle("UX"),  text: "Review [UX]-tagged FLAGGED rows — these are heuristic violations requiring redesign." },
-                        { role: "BA",  color: getRoleStyle("BA"),  text: "Validate [BA] FLAGGED items against requirements. May indicate missing acceptance criteria." },
-                        { role: "PM",  color: getRoleStyle("All"), text: "Use Pages 3–4 for the executive view. This section is the evidence record." },
-                      ].map(({ role, color, text }) => (
-                        <View key={role} style={styles.howToReadRow}>
-                          <Text style={[styles.howToReadRolePill, { backgroundColor: color.bg, color: color.color }]}>{role}</Text>
-                          <Text style={styles.howToReadText}>{text}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
+                  ))}
                 </View>
-              )}
-
-              {/* Stats bar */}
-              <View style={{ flexDirection: "row", gap: 8, marginBottom: 8 }}>
-                {[
-                  { label: "Checks in section", value: String(totalChecks),                  bg: "#eef2ff", color: "#4f46e5" },
-                  { label: "Flagged by AI",      value: String(flaggedChecks),               bg: "#fef9c3", color: "#b45309" },
-                  { label: "Evaluated clean",    value: String(totalChecks - flaggedChecks), bg: "#f0fdf4", color: "#16a34a" },
-                ].map((s) => (
-                  <View key={s.label} style={{ flex: 1, backgroundColor: s.bg, borderRadius: 5, padding: 7, alignItems: "center" }}>
-                    <Text style={{ fontSize: 13, fontFamily: "Helvetica-Bold", color: s.color }}>{s.value}</Text>
-                    <Text style={{ fontSize: 6, color: s.color }}>{s.label}</Text>
-                  </View>
-                ))}
               </View>
-
-              {/* Column header */}
-              <View style={styles.checkColHeader}>
-                <Text style={[styles.checkColHeaderText, { width: 26 }]}>ID</Text>
-                <Text style={[styles.checkColHeaderText, { flex: 1 }]}>Check / Evaluation Criterion</Text>
-                <Text style={[styles.checkColHeaderText, { width: 28 }]}>Role</Text>
-                <Text style={[styles.checkColHeaderText, { width: 55, textAlign: "center" }]}>AI Result</Text>
-              </View>
-
-              {cats.map((cat) => {
-                const catFlagged = cat.items.filter((item) => findingMap.has(item.id)).length;
-                return (
-                  <View key={cat.number}>
-                    <View style={styles.catHeader}>
-                      <Text style={styles.catHeaderText}>{cat.number}. {cat.name}</Text>
-                      <Text style={styles.catHeaderCount}>{cat.item_count} checks</Text>
-                      {catFlagged === 0
-                        ? <Text style={styles.catAllClearBadge}>All Clear</Text>
-                        : <Text style={[styles.catAllClearBadge, { backgroundColor: "rgba(251,191,36,0.35)" }]}>{catFlagged} Flagged</Text>
-                      }
-                    </View>
-                    {cat.items.map((item, itemIdx) => {
-                      const flagged = findingMap.get(item.id);
-                      const sevColors = flagged ? getCheckBadgeColors(flagged.severity) : null;
-                      const roleColors = getRoleStyle(item.role);
-                      const isAlt = itemIdx % 2 !== 0;
-                      return (
-                        <View
-                          key={item.id}
-                          style={[styles.checkRow, flagged ? styles.checkRowFlagged : isAlt ? styles.checkRowAlt : {}]}
-                        >
-                          <Text style={styles.checkId}>{item.id}</Text>
-                          <View style={styles.checkTextCol}>
-                            <Text style={styles.checkText}>{item.text}</Text>
-                            {flagged && (
-                              <Text style={styles.checkFindingNote}>
-                                Finding: {truncate(flagged.title, 72)}
-                              </Text>
-                            )}
-                          </View>
-                          <Text style={[styles.roleBadge, { backgroundColor: roleColors.bg, color: roleColors.color }]}>
-                            {item.role}
-                          </Text>
-                          {flagged && sevColors ? (
-                            <Text style={[styles.checkBadge, { backgroundColor: sevColors.bg, color: sevColors.color }]}>
-                              {flagged.severity.toUpperCase()}
-                            </Text>
-                          ) : (
-                            <Text style={styles.checkPass}>Pass</Text>
-                          )}
-                        </View>
-                      );
-                    })}
-                  </View>
-                );
-              })}
-
-              {/* Role legend */}
-              <View style={[styles.divider, { marginTop: 10, marginBottom: 6 }]} />
-              <View style={styles.roleLegendRow}>
-                <Text style={{ fontSize: 6, color: "#9ca3af", fontFamily: "Helvetica-Bold" }}>ROLE KEY:</Text>
-                {[
-                  { role: "UX",  label: "UX Designer" },
-                  { role: "Dev", label: "Developer" },
-                  { role: "BA",  label: "Business Analyst" },
-                  { role: "QA",  label: "QA Engineer" },
-                  { role: "All", label: "All Roles" },
-                ].map(({ role, label }) => {
-                  const c = getRoleStyle(role);
-                  return (
-                    <View key={role} style={styles.roleLegendItem}>
-                      <Text style={[styles.howToReadRolePill, { backgroundColor: c.bg, color: c.color }]}>{role}</Text>
-                      <Text style={styles.roleLegendLabel}>{label}</Text>
-                    </View>
-                  );
-                })}
-                <Text style={[styles.roleLegendLabel, { marginLeft: 6 }]}>
-                  STATUS: CRITICAL/HIGH/MEDIUM/LOW = AI flagged  ·  Pass = evaluated clean
+              <View style={S.catChapterRight}>
+                <Text style={[S.catScore, { color: getBarColor(score) }]}>{score ?? "—"}</Text>
+                <Text style={S.catScoreLabel}>out of 100</Text>
+                <Text style={[S.healthBadge, { backgroundColor: health.bg, color: health.color }]}>
+                  {health.label}
                 </Text>
               </View>
             </View>
 
-            <PageFooter auditName={audit.name} pageNum={String(7 + findings.length + halfIdx)} />
+            {/* ── FAILURES ── */}
+            {catFindings.length > 0 ? (
+              <View>
+                <View style={S.failuresSectionBar}>
+                  <Text style={S.failuresSectionTitle}>
+                    DETAILED FAILURES — {catFindings.length} VIOLATION{catFindings.length > 1 ? "S" : ""} FOUND
+                  </Text>
+                </View>
+                {catFindings.map((finding, fi) => (
+                  <FailureDetail
+                    key={fi}
+                    finding={finding}
+                    globalIndex={findings.indexOf(finding)}
+                  />
+                ))}
+              </View>
+            ) : (
+              <View style={{ backgroundColor: C.green50, borderRadius: 6, padding: 10, marginBottom: 10, borderLeftWidth: 3, borderLeftColor: C.green600 }}>
+                <Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold", color: C.green600, marginBottom: 3 }}>
+                  ALL CLEAR — No violations detected in this category
+                </Text>
+                <Text style={{ fontSize: 8, color: C.slate600 }}>
+                  All {cat.item_count} evaluation criteria in this category passed inspection.
+                  The interface demonstrates strong compliance with {cat.name} principles.
+                </Text>
+              </View>
+            )}
+
+            {/* ── PASSED CHECKS ── */}
+            <View style={S.passedSectionBar}>
+              <Text style={S.passedSectionTitle}>
+                PASSED CHECKS — {passedItems.length} OF {cat.item_count} CRITERIA MET
+              </Text>
+            </View>
+            <View style={S.passedGrid}>
+              {passedItems.map((item) => (
+                <View key={item.id} style={S.passedItem}>
+                  <Text style={S.passedCheckmark}>✓</Text>
+                  <Text style={S.passedId}>{item.id}</Text>
+                  <Text style={S.passedText}>{truncate(item.text, 58)}</Text>
+                </View>
+              ))}
+            </View>
+
+            <Footer auditName={audit.name} page={String(pageNum)} />
           </Page>
         );
       })}
 
-      {/* ══════════════════════════════════════════════════════
-          METHODOLOGY PAGE
-      ══════════════════════════════════════════════════════ */}
-      <Page size="A4" style={styles.page}>
-        <PageHeader title="Methodology & Framework" />
+      {/* ══════════════════════════════════════
+          PAGE 16 — RE-AUDIT & VALIDATION PROTOCOL
+      ══════════════════════════════════════ */}
+      <Page size="A4" style={S.lightPage}>
+        <LightHeader right="Section 3 — Re-Audit & Validation Protocol" />
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>How This Audit Was Conducted</Text>
-          <Text style={{ fontSize: 9, color: "#374151", lineHeight: 1.6 }}>
-            This report was produced by the Fusion UX platform using a multi-layer AI analysis pipeline.
-            The interface was captured as a full-page screenshot and analysed by Claude Sonnet, a large language
-            model with expert-level knowledge of UX heuristics, WCAG accessibility standards, and enterprise
-            product design patterns. The AI was guided by the Fusion UX 12-category heuristic framework
-            comprising 153 expert evaluation checks across usability, accessibility, information architecture,
-            and trust dimensions.
-          </Text>
-        </View>
+        <Text style={S.sectionTitle}>SECTION 3 — RE-AUDIT & VALIDATION PROTOCOL</Text>
+        <Text style={{ fontSize: 9, color: C.slate600, marginBottom: 14, lineHeight: 1.6 }}>
+          This page defines the formal process by which your development and design teams can submit
+          remediated items for validation. Clearing all Critical and High flags closes the compliance
+          loop and unlocks a clean re-audit score. Follow each step in order.
+        </Text>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Evaluation Standards Applied</Text>
-          <View style={{ flexDirection: "row", gap: 12 }}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.subsectionTitle}>Heuristic Frameworks</Text>
-              {[
-                "Nielsen's 10 Usability Heuristics",
-                "Shneiderman's 8 Golden Rules",
-                "Gestalt Principles of Visual Perception",
-                "Fitts's Law (interaction target sizing)",
-                "Cognitive Load Theory (Miller's Law)",
-                "Baymard Institute UX Research Patterns",
-              ].map((item, i) => (
-                <View key={i} style={{ flexDirection: "row", gap: 6, marginBottom: 5 }}>
-                  <Text style={{ fontSize: 8, color: "#4f46e5" }}>•</Text>
-                  <Text style={{ fontSize: 8, color: "#374151", flex: 1 }}>{item}</Text>
-                </View>
-              ))}
+        {[
+          {
+            title: "1. Implement the Remediation Strategy",
+            text: "For each FLAGGED item in this report, follow the AI-Generated Remediation Strategy provided in the relevant category chapter. Assign each item to the responsible role (UX Designer, Developer, or both) using the Role Key from the checklist pages. Ensure fixes are committed to a dedicated remediation branch.",
+          },
+          {
+            title: "2. Self-Assessment Checklist Sign-Off",
+            text: "Before submitting for validation, each responsible team member must mark their assigned criteria as resolved in the project tracking system. QA engineers should conduct a regression pass against every FLAGGED criterion listed in Section 2, using the Criterion ID as the test case reference (e.g., 'TC-9.5 Colour Contrast').",
+          },
+          {
+            title: "3. Submit Evidence Package to Fusion UX Validation Lab",
+            text: "Upload a screen-recording or annotated screenshot set demonstrating each fix. One piece of visual evidence per Criterion ID. Name files using the convention: CriterionID_Before.png and CriterionID_After.png. Submit via the Fusion UX dashboard under Audits → Re-Validate → Upload Evidence.",
+          },
+          {
+            title: "4. Automated Re-Analysis",
+            text: "Fusion UX will re-run the AI analysis pipeline against the updated screenshots, cross-referencing the same 153-criterion checklist. A preliminary diff report will be generated within minutes, showing which previously FLAGGED criteria now pass. Critical and High severity items require manual review before the flag is cleared.",
+          },
+          {
+            title: "5. Human Review & Flag Closure",
+            text: "A Fusion UX analyst will review the evidence package for all Critical-severity findings. Flags are cleared only when the remediation fully addresses the heuristic violation described in the original finding. Partial fixes will receive a Partially Resolved status with a follow-up note.",
+          },
+          {
+            title: "6. Compliance Certificate & Updated Score",
+            text: "Once all Critical and High flags are cleared, Fusion UX issues a dated Compliance Certificate confirming the audit score at time of validation. This certificate can be shared with legal, procurement, and accessibility compliance teams as evidence of due diligence under WCAG 2.1/2.2, ADA, and EAA requirements.",
+          },
+        ].map(({ title, text }, i) => (
+          <View key={i} style={S.validationStep}>
+            <View style={S.validationStepNum}>
+              <Text style={S.validationStepNumText}>{i + 1}</Text>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.subsectionTitle}>Accessibility Standards</Text>
-              {[
-                "WCAG 2.1 Level A / AA / AAA criteria",
-                "WCAG 2.2 (new Success Criteria)",
-                "ARIA Authoring Practices Guide (APG)",
-                "ADA (Americans with Disabilities Act)",
-                "EAA (European Accessibility Act)",
-                "EN 301 549 (EU accessibility standard)",
-              ].map((item, i) => (
-                <View key={i} style={{ flexDirection: "row", gap: 6, marginBottom: 5 }}>
-                  <Text style={{ fontSize: 8, color: "#4f46e5" }}>•</Text>
-                  <Text style={{ fontSize: 8, color: "#374151", flex: 1 }}>{item}</Text>
-                </View>
-              ))}
+            <View style={S.validationStepBody}>
+              <Text style={S.validationStepTitle}>{title}</Text>
+              <Text style={S.validationStepText}>{text}</Text>
             </View>
           </View>
-        </View>
+        ))}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>The 12-Category Heuristic Framework</Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-            {Object.entries(CATEGORY_NAMES).map(([num, name]) => (
-              <View key={num} style={{
-                width: "47%", flexDirection: "row", alignItems: "center", gap: 6,
-                backgroundColor: "#f9fafb", borderRadius: 5, padding: 7,
-              }}>
-                <Text style={{ fontSize: 8, color: "#4f46e5", fontFamily: "Helvetica-Bold", width: 20 }}>{num}</Text>
-                <Text style={{ fontSize: 8, color: "#374151", flex: 1 }}>{name}</Text>
-              </View>
-            ))}
+        {/* Validation criteria table */}
+        <Text style={[S.subsectionTitle, { marginTop: 12 }]}>VALIDATION ACCEPTANCE CRITERIA</Text>
+        <View style={S.criteriaTable}>
+          <View style={S.criteriaHeaderRow}>
+            <Text style={[S.criteriaHeaderCell, { width: "18%" }]}>Severity</Text>
+            <Text style={[S.criteriaHeaderCell, { width: "30%" }]}>Evidence Required</Text>
+            <Text style={[S.criteriaHeaderCell, { width: "22%" }]}>Review Type</Text>
+            <Text style={[S.criteriaHeaderCell, { width: "30%" }]}>SLA to Clear</Text>
           </View>
-          <Text style={{ fontSize: 8, color: "#6b7280", marginTop: 8 }}>
-            153 checks total across 12 categories. Each check is tagged by responsible role (UX Designer, Developer,
-            Business Analyst, QA Engineer, or All). Severity is determined by user impact, task completion risk,
-            and WCAG compliance level.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Severity Classification</Text>
           {[
-            { sev: "CRITICAL", bg: "#fee2e2", color: "#dc2626", desc: "Blocks task completion, WCAG Level A/AA failure, legal accessibility risk, or data loss. Requires immediate remediation." },
-            { sev: "HIGH",     bg: "#ffedd5", color: "#ea580c", desc: "Significant usability friction, measurable conversion or abandonment impact, major inconsistency. Address within 30 days." },
-            { sev: "MEDIUM",   bg: "#fef9c3", color: "#ca8a04", desc: "Noticeable friction, moderate cognitive load increase, design inconsistency. Address within 60 days." },
-            { sev: "LOW",      bg: "#dcfce7", color: "#16a34a", desc: "Polish issue, minor inconsistency, or minor cognitive load. Improvements will enhance brand quality." },
-          ].map(({ sev, bg, color, desc }) => (
-            <View key={sev} style={{ flexDirection: "row", gap: 10, marginBottom: 7 }}>
-              <Text style={[styles.findingBadge, { backgroundColor: bg, color, width: 58, textAlign: "center" }]}>{sev}</Text>
-              <Text style={{ fontSize: 8, color: "#374151", flex: 1, lineHeight: 1.5 }}>{desc}</Text>
+            { sev: "CRITICAL", ev: "Screenshot + screen recording + dev note", rev: "Manual analyst review", sla: "3 business days" },
+            { sev: "HIGH",     ev: "Before/after screenshots annotated",       rev: "Manual analyst review", sla: "5 business days" },
+            { sev: "MEDIUM",   ev: "Before/after screenshots",                 rev: "Automated + spot check", sla: "7 business days" },
+            { sev: "LOW",      ev: "After screenshot",                         rev: "Automated re-analysis",  sla: "10 business days" },
+          ].map(({ sev, ev, rev, sla }, i) => (
+            <View key={sev} style={[S.criteriaRow, i % 2 !== 0 ? S.criteriaRowAlt : {}]}>
+              <Text style={[S.criteriaCell, { width: "18%", fontFamily: "Helvetica-Bold" }]}>{sev}</Text>
+              <Text style={[S.criteriaCell, { width: "30%" }]}>{ev}</Text>
+              <Text style={[S.criteriaCell, { width: "22%" }]}>{rev}</Text>
+              <Text style={[S.criteriaCell, { width: "30%" }]}>{sla}</Text>
             </View>
           ))}
         </View>
 
-        <View style={styles.divider} />
-        <Text style={{ fontSize: 7, color: "#9ca3af", textAlign: "center", lineHeight: 1.7 }}>
-          {"This report was generated by the Fusion UX platform. Findings were produced by AI analysis and may be enhanced by human review.\n"}
-          {"Report generated: "}{new Date().toLocaleString()}{"  ·  Confidential — not for external distribution without authorisation."}
+        <Footer auditName={audit.name} page="16" />
+      </Page>
+
+      {/* ══════════════════════════════════════
+          PAGE 17 — METHODOLOGY
+      ══════════════════════════════════════ */}
+      <Page size="A4" style={S.lightPage}>
+        <LightHeader right="Appendix — Methodology & Standards" />
+
+        <Text style={S.sectionTitle}>APPENDIX — METHODOLOGY & EVALUATION STANDARDS</Text>
+
+        <View style={S.twoCol}>
+          <View style={S.col}>
+            <Text style={S.subsectionTitle}>Heuristic Frameworks Applied</Text>
+            {[
+              "Nielsen's 10 Usability Heuristics",
+              "Shneiderman's 8 Golden Rules of Interface Design",
+              "Gestalt Principles of Visual Perception",
+              "Fitts's Law — interaction target sizing",
+              "Miller's Law — cognitive load theory",
+              "Baymard Institute UX Research (2023)",
+              "GOV.UK Design System patterns",
+              "Material Design 3 guidelines",
+            ].map((item, i) => (
+              <View key={i} style={{ flexDirection: "row", gap: 6, marginBottom: 4 }}>
+                <Text style={{ fontSize: 8, color: C.indigo600 }}>•</Text>
+                <Text style={{ fontSize: 8, color: C.slate700 }}>{item}</Text>
+              </View>
+            ))}
+          </View>
+          <View style={S.col}>
+            <Text style={S.subsectionTitle}>Accessibility & Legal Standards</Text>
+            {[
+              "WCAG 2.1 Level A / AA / AAA",
+              "WCAG 2.2 (2023) new Success Criteria",
+              "ARIA Authoring Practices Guide (APG)",
+              "ADA — Americans with Disabilities Act",
+              "EAA — European Accessibility Act (2025)",
+              "EN 301 549 — EU accessibility standard",
+              "Section 508 (US federal requirements)",
+            ].map((item, i) => (
+              <View key={i} style={{ flexDirection: "row", gap: 6, marginBottom: 4 }}>
+                <Text style={{ fontSize: 8, color: C.indigo600 }}>•</Text>
+                <Text style={{ fontSize: 8, color: C.slate700 }}>{item}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={S.divider} />
+
+        <Text style={S.subsectionTitle}>THE {TOTAL_CRITERIA}-CRITERION EVALUATION FRAMEWORK</Text>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+          {HEURISTIC_CHECKLIST.categories.map((cat) => {
+            const score = catScores[cat.number] ?? null;
+            return (
+              <View key={cat.number} style={{
+                width: "47%", flexDirection: "row", alignItems: "center", gap: 6,
+                backgroundColor: C.slate50, borderRadius: 5, padding: 7,
+                borderLeftWidth: 2, borderLeftColor: getBarColor(score),
+              }}>
+                <Text style={{ fontSize: 8, color: C.indigo600, fontFamily: "Helvetica-Bold", width: 22 }}>{cat.number}</Text>
+                <Text style={{ fontSize: 8, color: C.slate700, flex: 1 }}>{cat.name}</Text>
+                <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: getScoreColor(score) }}>
+                  {score ?? "—"}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+
+        <View style={S.divider} />
+
+        <Text style={S.subsectionTitle}>SEVERITY CLASSIFICATION GUIDE</Text>
+        {[
+          { sev: "CRITICAL", pill: S.pillCritical, desc: "Blocks task completion, WCAG Level A/AA failure, legal accessibility exposure, or data loss. Zero tolerance — requires immediate remediation before next release." },
+          { sev: "HIGH",     pill: S.pillHigh,     desc: "Significant usability friction, measurable conversion or abandonment impact, major heuristic violation. Remediate within 30 days." },
+          { sev: "MEDIUM",   pill: S.pillMedium,   desc: "Noticeable friction, cognitive load increase, or design inconsistency. Remediate within 60 days in next sprint cycle." },
+          { sev: "LOW",      pill: S.pillLow,      desc: "Polish issue, minor inconsistency, or small cognitive load cost. Address in next quarterly design review." },
+        ].map(({ sev, pill, desc }) => (
+          <View key={sev} style={{ flexDirection: "row", gap: 10, marginBottom: 7 }}>
+            <Text style={[S.severityPill, pill, { width: 55, textAlign: "center" }]}>{sev}</Text>
+            <Text style={{ fontSize: 8, color: C.slate700, flex: 1, lineHeight: 1.5 }}>{desc}</Text>
+          </View>
+        ))}
+
+        <View style={S.divider} />
+        <Text style={{ fontSize: 7, color: C.slate400, textAlign: "center", lineHeight: 1.7 }}>
+          {"This report was generated by the Fusion UX AI platform. All findings are AI-identified and may be enhanced by human review.\n"}
+          {"Generated: "}{new Date().toLocaleString()}
+          {"  ·  Confidential — not for external distribution without authorisation from the commissioning organisation."}
         </Text>
 
-        <PageFooter auditName={audit.name} pageNum={String(9 + findings.length)} />
+        <Footer auditName={audit.name} page="17" />
       </Page>
 
     </Document>

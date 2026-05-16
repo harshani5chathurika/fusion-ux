@@ -17,10 +17,10 @@ export async function POST(request: NextRequest) {
     const { audit_id } = body;
     if (!audit_id) return NextResponse.json({ error: "audit_id required" }, { status: 400 });
 
-    // Fetch audit + findings
+    // Fetch audit + findings + project name (for org field on cover page)
     const { data: audit, error: auditError } = await supabase
       .from("audits")
-      .select(`*, findings(*)`)
+      .select(`*, findings(*), projects(name)`)
       .eq("id", audit_id)
       .eq("created_by", user.id)
       .single();
@@ -64,12 +64,18 @@ export async function POST(request: NextRequest) {
     const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
 
     // Build report data and generate PDF
+    const projectName = Array.isArray(audit.projects)
+      ? audit.projects[0]?.name ?? null
+      : (audit.projects as { name?: string } | null)?.name ?? null;
+
     const reportData = {
-      audit, findings,
+      audit,
+      findings,
       executive_summary: aiContent.executive_summary,
       roi_analysis: aiContent.roi_analysis,
       roadmap: aiContent.roadmap,
       preparer_name: profile?.full_name ?? user.email ?? "Fusion UX",
+      organization_name: projectName ?? undefined,
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
