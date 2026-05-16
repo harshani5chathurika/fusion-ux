@@ -306,6 +306,7 @@ export function ComparisonView({ auditId, findingStatus, verificationStatus, onV
                   src={auditScreenshotUrl}
                   alt="Before"
                   className="w-full h-auto rounded-lg border border-border shadow-sm"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                 />
                 {/* Highlight the failing area */}
                 {comparingFinding.bounding_box && (
@@ -590,7 +591,7 @@ export function ComparisonView({ auditId, findingStatus, verificationStatus, onV
                   <div>
                     <h3 className="font-bold text-base">Generate AI Design Fix</h3>
                     <p className="text-xs text-muted-foreground mt-1 max-w-xs leading-relaxed">
-                      GPT-4o + DALL·E 3 will analyze the violation and generate a visual proposed design that resolves it
+                      Claude + Gemini will analyze the violation and generate a visual proposed design that resolves it
                     </p>
                   </div>
                   {planStatus !== "pro" && remaining !== null && (
