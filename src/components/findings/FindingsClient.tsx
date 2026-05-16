@@ -9,8 +9,9 @@ import {
   Clock,
   XCircle,
   Edit3,
-  ChevronDown,
+  ChevronRight,
   ExternalLink,
+  Folder,
   FolderOpen,
 } from "lucide-react";
 import { formatRelative } from "@/lib/utils/format";
@@ -47,12 +48,22 @@ const VERIFICATION_CONFIG: Record<string, { icon: JSX.Element; label: string; co
   rejected: { icon: <XCircle className="h-3.5 w-3.5" />, label: "Rejected", color: "text-red-600" },
 };
 
+const SEVERITY_ORDER: SeverityLevel[] = ["critical", "high", "medium", "low"];
+
+const SEVERITY_SECTION_STYLE: Record<SeverityLevel, { dot: string; label: string; bg: string; border: string }> = {
+  critical: { dot: "bg-red-500", label: "Critical", bg: "bg-red-50 dark:bg-red-950/20", border: "border-red-200 dark:border-red-800" },
+  high:     { dot: "bg-orange-500", label: "High", bg: "bg-orange-50 dark:bg-orange-950/20", border: "border-orange-200 dark:border-orange-800" },
+  medium:   { dot: "bg-yellow-500", label: "Medium", bg: "bg-yellow-50 dark:bg-yellow-950/20", border: "border-yellow-200 dark:border-yellow-800" },
+  low:      { dot: "bg-blue-400", label: "Low", bg: "bg-blue-50 dark:bg-blue-950/20", border: "border-blue-200 dark:border-blue-800" },
+};
+
 export function FindingsClient({ findings }: { findings: Finding[] }) {
   const [search, setSearch] = useState("");
   const [severityFilter, setSeverityFilter] = useState<string>("all");
   const [verificationFilter, setVerificationFilter] = useState<string>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [collapsedAudits, setCollapsedAudits] = useState<Set<string>>(new Set());
+  const [collapsedSeverities, setCollapsedSeverities] = useState<Set<string>>(new Set());
 
   const filtered = useMemo(() => {
     return findings.filter((f) => {
@@ -67,24 +78,21 @@ export function FindingsClient({ findings }: { findings: Finding[] }) {
     });
   }, [findings, search, severityFilter, verificationFilter]);
 
-  const groupedByAudit = useMemo(() => {
-    const map = new Map<string, { auditId: string; auditName: string; findings: Finding[] }>();
+  // Group: audit → severity → findings
+  const grouped = useMemo(() => {
+    const auditMap = new Map<string, { auditId: string; auditName: string; bySeverity: Map<SeverityLevel, Finding[]> }>();
     for (const f of filtered) {
       const key = f.audits?.id ?? "__none__";
-      const name = f.audits?.name ?? "No Audit";
-      if (!map.has(key)) map.set(key, { auditId: key, auditName: name, findings: [] });
-      map.get(key)!.findings.push(f);
+      const name = f.audits?.name ?? "Unassigned";
+      if (!auditMap.has(key)) {
+        auditMap.set(key, { auditId: key, auditName: name, bySeverity: new Map() });
+      }
+      const group = auditMap.get(key)!;
+      if (!group.bySeverity.has(f.severity)) group.bySeverity.set(f.severity, []);
+      group.bySeverity.get(f.severity)!.push(f);
     }
-    return Array.from(map.values());
+    return Array.from(auditMap.values());
   }, [filtered]);
-
-  function toggleAudit(auditId: string) {
-    setCollapsedAudits((prev) => {
-      const next = new Set(prev);
-      next.has(auditId) ? next.delete(auditId) : next.add(auditId);
-      return next;
-    });
-  }
 
   const counts = {
     critical: findings.filter((f) => f.severity === "critical").length,
@@ -95,13 +103,29 @@ export function FindingsClient({ findings }: { findings: Finding[] }) {
     verified: findings.filter((f) => f.verification_status === "verified").length,
   };
 
+  function toggleAudit(id: string) {
+    setCollapsedAudits((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSeverity(key: string) {
+    setCollapsedSeverities((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Findings</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {findings.length} issues across all audits
+            {findings.length} issues across {grouped.length} audit{grouped.length !== 1 ? "s" : ""}
           </p>
         </div>
       </div>
@@ -133,7 +157,6 @@ export function FindingsClient({ findings }: { findings: Finding[] }) {
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
-
         <select
           value={severityFilter}
           onChange={(e) => setSeverityFilter(e.target.value)}
@@ -145,7 +168,6 @@ export function FindingsClient({ findings }: { findings: Finding[] }) {
           <option value="medium">Medium</option>
           <option value="low">Low</option>
         </select>
-
         <select
           value={verificationFilter}
           onChange={(e) => setVerificationFilter(e.target.value)}
@@ -157,136 +179,156 @@ export function FindingsClient({ findings }: { findings: Finding[] }) {
           <option value="edited">Edited</option>
           <option value="rejected">Rejected</option>
         </select>
-
         {(search || severityFilter !== "all" || verificationFilter !== "all") && (
-          <span className="text-xs text-muted-foreground">
-            Showing {filtered.length} of {findings.length}
-          </span>
+          <span className="text-xs text-muted-foreground">Showing {filtered.length} of {findings.length}</span>
         )}
       </div>
 
-      {/* Findings grouped by audit */}
+      {/* Folder tree */}
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <AlertTriangle className="h-10 w-10 mx-auto mb-3 opacity-30" />
           <p className="text-sm">No findings match your filters</p>
         </div>
       ) : (
-        <div className="space-y-6">
-          {groupedByAudit.map(({ auditId, auditName, findings: groupFindings }) => {
-            const isCollapsed = collapsedAudits.has(auditId);
+        <div className="space-y-3">
+          {grouped.map(({ auditId, auditName, bySeverity }) => {
+            const auditCollapsed = collapsedAudits.has(auditId);
+            const totalInAudit = Array.from(bySeverity.values()).reduce((s, arr) => s + arr.length, 0);
+
             return (
-              <div key={auditId} className="space-y-2">
-                {/* Audit group header */}
+              <div key={auditId} className="rounded-xl border border-border bg-card overflow-hidden">
+                {/* ── Audit folder header ── */}
                 <button
                   onClick={() => toggleAudit(auditId)}
-                  className="w-full flex items-center gap-2 py-2 text-left group"
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left"
                 >
-                  <FolderOpen className="h-4 w-4 text-primary flex-shrink-0" />
-                  <span className="text-sm font-semibold text-foreground flex-1 truncate">{auditName}</span>
-                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                    {groupFindings.length} finding{groupFindings.length !== 1 ? "s" : ""}
+                  {auditCollapsed
+                    ? <Folder className="h-4 w-4 text-violet-500 flex-shrink-0" />
+                    : <FolderOpen className="h-4 w-4 text-violet-500 flex-shrink-0" />
+                  }
+                  <span className="font-semibold text-sm flex-1 truncate">{auditName}</span>
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full mr-1">
+                    {totalInAudit} finding{totalInAudit !== 1 ? "s" : ""}
                   </span>
                   {auditId !== "__none__" && (
                     <Link
                       href={`/audits/${auditId}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="text-xs text-primary hover:underline flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="text-xs text-primary hover:underline flex items-center gap-1 mr-2"
                     >
                       <ExternalLink className="h-3 w-3" />
-                      Open audit
+                      Open
                     </Link>
                   )}
-                  <ChevronDown className={cn(
+                  <ChevronRight className={cn(
                     "h-4 w-4 text-muted-foreground transition-transform flex-shrink-0",
-                    isCollapsed && "-rotate-90"
+                    !auditCollapsed && "rotate-90"
                   )} />
                 </button>
-                <div className="h-px bg-border" />
 
-                {!isCollapsed && (
-                  <div className="space-y-2 pl-6">
-                    {groupFindings.map((finding) => {
-                      const severityConfig = SEVERITY_CONFIG[finding.severity];
-                      const verConfig = VERIFICATION_CONFIG[finding.verification_status] ?? VERIFICATION_CONFIG.pending;
-                      const isExpanded = expandedId === finding.id;
-                      const priorityScore = finding.impact_score && finding.frequency_score
-                        ? finding.impact_score * finding.frequency_score : null;
+                {/* ── Severity sub-folders ── */}
+                {!auditCollapsed && (
+                  <div className="border-t border-border divide-y divide-border">
+                    {SEVERITY_ORDER.filter((sev) => bySeverity.has(sev)).map((sev) => {
+                      const sevFindings = bySeverity.get(sev)!;
+                      const style = SEVERITY_SECTION_STYLE[sev];
+                      const sevKey = `${auditId}:${sev}`;
+                      const sevCollapsed = collapsedSeverities.has(sevKey);
 
                       return (
-                        <div
-                          key={finding.id}
-                          className={cn(
-                            "rounded-xl border transition-all",
-                            isExpanded ? "border-primary/40 bg-primary/2" : "border-border bg-card hover:border-primary/30"
-                          )}
-                        >
+                        <div key={sev}>
+                          {/* Severity header */}
                           <button
-                            className="w-full text-left px-5 py-4"
-                            onClick={() => setExpandedId(isExpanded ? null : finding.id)}
+                            onClick={() => toggleSeverity(sevKey)}
+                            className={cn(
+                              "w-full flex items-center gap-2.5 px-4 py-2.5 text-left hover:bg-muted/30 transition-colors",
+                              style.bg
+                            )}
                           >
-                            <div className="flex items-start gap-3">
-                              <span className={cn(
-                                "text-[10px] font-bold px-1.5 py-0.5 rounded border flex-shrink-0 mt-0.5",
-                                severityConfig.bg, severityConfig.color, severityConfig.border
-                              )}>
-                                {severityConfig.label.toUpperCase()}
-                              </span>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium leading-snug">{finding.title}</p>
-                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
-                                  {finding.heuristic_category && <span>{finding.heuristic_category}</span>}
-                                  {finding.location && (
-                                    <><span>·</span><span>📍 {finding.location}</span></>
-                                  )}
-                                  <span>·</span>
-                                  <span>{formatRelative(finding.created_at)}</span>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                {priorityScore && (
-                                  <span className="text-xs font-bold text-primary">P{priorityScore}</span>
-                                )}
-                                <div className={cn("flex items-center gap-1", verConfig.color)}>
-                                  {verConfig.icon}
-                                  <span className="text-xs hidden sm:block">{verConfig.label}</span>
-                                </div>
-                                <ChevronDown className={cn(
-                                  "h-4 w-4 text-muted-foreground transition-transform",
-                                  isExpanded && "rotate-180"
-                                )} />
-                              </div>
-                            </div>
+                            <span className={cn("w-2 h-2 rounded-full flex-shrink-0", style.dot)} />
+                            <span className="text-xs font-semibold flex-1">{style.label}</span>
+                            <span className="text-xs text-muted-foreground">{sevFindings.length}</span>
+                            <ChevronRight className={cn(
+                              "h-3.5 w-3.5 text-muted-foreground transition-transform flex-shrink-0",
+                              !sevCollapsed && "rotate-90"
+                            )} />
                           </button>
 
-                          {isExpanded && (
-                            <div className="px-5 pb-5 border-t border-border pt-4 space-y-4">
-                              {finding.description && (
-                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                  {finding.description}
-                                </p>
-                              )}
-                              <div className="grid grid-cols-2 gap-3">
-                                {finding.ai_suggestion && (
-                                  <div className="rounded-lg bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800 p-3">
-                                    <p className="text-xs font-semibold text-violet-700 dark:text-violet-300 mb-1">AI Recommendation</p>
-                                    <p className="text-xs text-violet-800 dark:text-violet-200 leading-relaxed">{finding.ai_suggestion}</p>
+                          {/* Findings inside severity */}
+                          {!sevCollapsed && (
+                            <div className="divide-y divide-border/60">
+                              {sevFindings.map((finding) => {
+                                const severityConfig = SEVERITY_CONFIG[finding.severity];
+                                const verConfig = VERIFICATION_CONFIG[finding.verification_status] ?? VERIFICATION_CONFIG.pending;
+                                const isExpanded = expandedId === finding.id;
+
+                                return (
+                                  <div key={finding.id} className="bg-background">
+                                    <button
+                                      className="w-full text-left px-5 py-3 hover:bg-muted/20 transition-colors"
+                                      onClick={() => setExpandedId(isExpanded ? null : finding.id)}
+                                    >
+                                      <div className="flex items-start gap-3">
+                                        <span className={cn(
+                                          "text-[10px] font-bold px-1.5 py-0.5 rounded border flex-shrink-0 mt-0.5",
+                                          severityConfig.bg, severityConfig.color, severityConfig.border
+                                        )}>
+                                          {severityConfig.label.toUpperCase()}
+                                        </span>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-sm font-medium leading-snug">{finding.title}</p>
+                                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
+                                            {finding.heuristic_category && <span>{finding.heuristic_category}</span>}
+                                            {finding.location && (
+                                              <><span>·</span><span>📍 {finding.location}</span></>
+                                            )}
+                                            <span>·</span>
+                                            <span>{formatRelative(finding.created_at)}</span>
+                                          </div>
+                                        </div>
+                                        <div className={cn("flex items-center gap-1 flex-shrink-0", verConfig.color)}>
+                                          {verConfig.icon}
+                                          <span className="text-xs hidden sm:block">{verConfig.label}</span>
+                                        </div>
+                                        <ChevronRight className={cn(
+                                          "h-4 w-4 text-muted-foreground transition-transform flex-shrink-0",
+                                          isExpanded && "rotate-90"
+                                        )} />
+                                      </div>
+                                    </button>
+
+                                    {isExpanded && (
+                                      <div className="px-5 pb-4 pt-3 border-t border-border/60 space-y-3 bg-muted/10">
+                                        {finding.description && (
+                                          <p className="text-sm text-muted-foreground leading-relaxed">{finding.description}</p>
+                                        )}
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                          {finding.ai_suggestion && (
+                                            <div className="rounded-lg bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800 p-3">
+                                              <p className="text-xs font-semibold text-violet-700 dark:text-violet-300 mb-1">AI Recommendation</p>
+                                              <p className="text-xs text-violet-800 dark:text-violet-200 leading-relaxed">{finding.ai_suggestion}</p>
+                                            </div>
+                                          )}
+                                          {finding.business_impact && (
+                                            <div className="rounded-lg bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 p-3">
+                                              <p className="text-xs font-semibold text-orange-700 dark:text-orange-300 mb-1">Business Impact</p>
+                                              <p className="text-xs text-orange-800 dark:text-orange-200 leading-relaxed">{finding.business_impact}</p>
+                                            </div>
+                                          )}
+                                        </div>
+                                        <Link
+                                          href={`/audits/${finding.audits?.id}`}
+                                          className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                                        >
+                                          <ExternalLink className="h-3 w-3" />
+                                          Review in audit workspace
+                                        </Link>
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                                {finding.business_impact && (
-                                  <div className="rounded-lg bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 p-3">
-                                    <p className="text-xs font-semibold text-orange-700 dark:text-orange-300 mb-1">Business Impact</p>
-                                    <p className="text-xs text-orange-800 dark:text-orange-200 leading-relaxed">{finding.business_impact}</p>
-                                  </div>
-                                )}
-                              </div>
-                              <Link
-                                href={`/audits/${finding.audits?.id}`}
-                                className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-                              >
-                                <ExternalLink className="h-3 w-3" />
-                                Review in audit workspace
-                              </Link>
+                                );
+                              })}
                             </div>
                           )}
                         </div>
