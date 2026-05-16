@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Font,
 } from "@react-pdf/renderer";
+import { HEURISTIC_CHECKLIST } from "@/lib/checklist";
 
 // ============================================================
 // PDF STYLES
@@ -265,6 +266,83 @@ const styles = StyleSheet.create({
 
   // Divider
   divider: { borderBottomWidth: 1, borderBottomColor: "#e5e7eb", marginVertical: 16 },
+
+  // Checklist coverage
+  catHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#4f46e5",
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+    marginTop: 10,
+    marginBottom: 0,
+    gap: 6,
+  },
+  catHeaderText: { fontSize: 8, fontFamily: "Helvetica-Bold", color: "#ffffff", flex: 1 },
+  catHeaderCount: { fontSize: 7, color: "rgba(255,255,255,0.75)" },
+  catAllClearBadge: {
+    fontSize: 6, fontFamily: "Helvetica-Bold",
+    backgroundColor: "rgba(255,255,255,0.25)", color: "#ffffff",
+    paddingHorizontal: 5, paddingVertical: 2, borderRadius: 3,
+  },
+  checkColHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f9fafb",
+    paddingVertical: 3,
+    paddingHorizontal: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+    gap: 6,
+  },
+  checkColHeaderText: { fontSize: 6, fontFamily: "Helvetica-Bold", color: "#9ca3af", textTransform: "uppercase" },
+  checkRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    paddingVertical: 3,
+    paddingHorizontal: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
+    gap: 6,
+  },
+  checkRowAlt: { backgroundColor: "#fafafa" },
+  checkRowFlagged: { backgroundColor: "#fffbeb" },
+  checkId: { fontSize: 7, color: "#9ca3af", width: 26, paddingTop: 1 },
+  checkTextCol: { flex: 1 },
+  checkText: { fontSize: 7, color: "#374151", lineHeight: 1.35 },
+  checkFindingNote: { fontSize: 6, color: "#b45309", lineHeight: 1.3, marginTop: 2, fontFamily: "Helvetica-Oblique" },
+  roleBadge: {
+    fontSize: 6, fontFamily: "Helvetica-Bold",
+    paddingHorizontal: 4, paddingVertical: 2,
+    borderRadius: 3, width: 28, textAlign: "center",
+  },
+  checkBadge: {
+    fontSize: 6, fontFamily: "Helvetica-Bold",
+    paddingHorizontal: 4, paddingVertical: 2,
+    borderRadius: 3, width: 55, textAlign: "center",
+  },
+  checkPass: { fontSize: 6, color: "#d1d5db", width: 55, textAlign: "center", paddingTop: 2 },
+  howToReadBox: {
+    backgroundColor: "#f8f7ff",
+    borderRadius: 6,
+    padding: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: "#4f46e5",
+    marginBottom: 10,
+  },
+  howToReadTitle: { fontSize: 8, fontFamily: "Helvetica-Bold", color: "#4f46e5", marginBottom: 5 },
+  howToReadGrid: { flexDirection: "row", gap: 10 },
+  howToReadCol: { flex: 1, gap: 3 },
+  howToReadRow: { flexDirection: "row", alignItems: "flex-start", gap: 5 },
+  howToReadRolePill: {
+    fontSize: 6, fontFamily: "Helvetica-Bold",
+    paddingHorizontal: 4, paddingVertical: 2, borderRadius: 3, minWidth: 24, textAlign: "center",
+  },
+  howToReadText: { fontSize: 7, color: "#374151", flex: 1, lineHeight: 1.3 },
+  roleLegendRow: { flexDirection: "row", alignItems: "center", gap: 16, marginTop: 6, flexWrap: "wrap" },
+  roleLegendItem: { flexDirection: "row", alignItems: "center", gap: 4 },
+  roleLegendLabel: { fontSize: 6, color: "#6b7280" },
 });
 
 // ============================================================
@@ -275,6 +353,7 @@ interface ReportFinding {
   description: string | null;
   severity: "critical" | "high" | "medium" | "low";
   heuristic_category: string | null;
+  heuristic_item_id: string | null;
   location: string | null;
   ai_suggestion: string | null;
   business_impact: string | null;
@@ -326,6 +405,25 @@ function getBarColor(score: number | null): string {
   if (score >= 60) return "#eab308";
   if (score >= 40) return "#f97316";
   return "#ef4444";
+}
+
+function getCheckBadgeColors(severity: string): { bg: string; color: string } {
+  switch (severity) {
+    case "critical": return { bg: "#fee2e2", color: "#dc2626" };
+    case "high": return { bg: "#ffedd5", color: "#ea580c" };
+    case "medium": return { bg: "#fef9c3", color: "#ca8a04" };
+    default: return { bg: "#dcfce7", color: "#16a34a" };
+  }
+}
+
+function getRoleStyle(role: string): { bg: string; color: string } {
+  switch (role) {
+    case "UX":  return { bg: "#f3e8ff", color: "#7e22ce" };
+    case "Dev": return { bg: "#dbeafe", color: "#1d4ed8" };
+    case "BA":  return { bg: "#ffedd5", color: "#c2410c" };
+    case "QA":  return { bg: "#dcfce7", color: "#166534" };
+    default:    return { bg: "#f3f4f6", color: "#374151" }; // All
+  }
 }
 
 function getFindingStyle(severity: string) {
@@ -380,6 +478,18 @@ export function ReportDocument({ data }: { data: ReportData }) {
   const criticalFindings = findings.filter((f) => f.severity === "critical");
   const highFindings = findings.filter((f) => f.severity === "high");
   const mediumFindings = findings.filter((f) => f.severity === "medium");
+
+  // Map checklist item IDs to their flagged finding (for checklist coverage pages)
+  const findingMap = new Map<string, { severity: string; title: string }>();
+  for (const f of findings) {
+    if (f.heuristic_item_id) {
+      findingMap.set(f.heuristic_item_id, { severity: f.severity, title: f.title });
+    }
+  }
+  const checklistHalves = [
+    HEURISTIC_CHECKLIST.categories.slice(0, 6),
+    HEURISTIC_CHECKLIST.categories.slice(6),
+  ];
 
   return (
     <Document
@@ -651,46 +761,160 @@ export function ReportDocument({ data }: { data: ReportData }) {
         <PageFooter auditName={audit.name} pageNum="5" />
       </Page>
 
-      {/* ============ PAGE 6 — APPENDIX ============ */}
-      <Page size="A4" style={styles.page}>
-        <PageHeader title="Appendix — Heuristic Framework" />
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Fusion UX 12-Category Evaluation Framework</Text>
-          <Text style={{ fontSize: 9, color: "#6b7280", marginBottom: 12, lineHeight: 1.5 }}>
-            This audit was conducted against the Fusion UX proprietary 12-category heuristic evaluation
-            framework comprising 153 expert checks across UX, accessibility, IA, and trust dimensions.
-          </Text>
-          {[
-            { num: "01", name: "Visibility of System State", items: 18 },
-            { num: "02", name: "Match Between System and the Real World", items: 14 },
-            { num: "03", name: "User Control and Freedom", items: 15 },
-            { num: "04", name: "Consistency and Standards", items: 14 },
-            { num: "05", name: "Error Prevention and Recovery", items: 18 },
-            { num: "06", name: "Recognition Over Recall", items: 12 },
-            { num: "07", name: "Flexibility, Aesthetics and Minimalism", items: 16 },
-            { num: "08", name: "Adaptability and User Efficiency", items: 16 },
-            { num: "09", name: "Inclusivity and Accessibility", items: 18 },
-            { num: "10", name: "Information Architecture", items: 12 },
-            { num: "11", name: "Content and Microcopy", items: 12 },
-            { num: "12", name: "Trust, Privacy and Data UX", items: 8 },
-          ].map((cat) => (
-            <View key={cat.num} style={[styles.categoryRow, { marginBottom: 8 }]}>
-              <Text style={{ fontSize: 8, color: "#9ca3af", width: 20 }}>{cat.num}</Text>
-              <Text style={{ fontSize: 9, color: "#374151", flex: 1 }}>{cat.name}</Text>
-              <Text style={{ fontSize: 8, color: "#6b7280", width: 60, textAlign: "right" }}>
-                {cat.items} checks
+      {/* ============ PAGES 6 & 7 — HEURISTIC CHECKLIST COVERAGE ============ */}
+      {checklistHalves.map((cats, halfIdx) => {
+        const totalChecks = cats.reduce((sum, c) => sum + c.item_count, 0);
+        const flaggedChecks = cats.reduce(
+          (sum, c) => sum + c.items.filter((item) => findingMap.has(item.id)).length,
+          0
+        );
+        return (
+          <Page key={halfIdx} size="A4" style={styles.page}>
+            <PageHeader title={`Heuristic Checklist — ${halfIdx === 0 ? "Categories 01–06" : "Categories 07–12"}`} />
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>
+                {halfIdx === 0 ? "Full Checklist Coverage — Part 1 of 2" : "Full Checklist Coverage — Part 2 of 2"}
               </Text>
+
+              {/* How-to-read guide — page 6 only */}
+              {halfIdx === 0 && (
+                <View style={styles.howToReadBox}>
+                  <Text style={styles.howToReadTitle}>How to read this section</Text>
+                  <View style={styles.howToReadGrid}>
+                    <View style={styles.howToReadCol}>
+                      {[
+                        { role: "QA",  color: getRoleStyle("QA"),  text: "Test every FLAGGED row against the live product. Raise a defect if the issue persists." },
+                        { role: "Dev", color: getRoleStyle("Dev"), text: "Implement the fix for rows tagged [Dev] or [All] that are FLAGGED. Refer to Pages 3–4 for the AI recommendation." },
+                      ].map(({ role, color, text }) => (
+                        <View key={role} style={styles.howToReadRow}>
+                          <Text style={[styles.howToReadRolePill, { backgroundColor: color.bg, color: color.color }]}>{role}</Text>
+                          <Text style={styles.howToReadText}>{text}</Text>
+                        </View>
+                      ))}
+                    </View>
+                    <View style={styles.howToReadCol}>
+                      {[
+                        { role: "UX",  color: getRoleStyle("UX"),  text: "Review [UX]-tagged rows. FLAGGED items are heuristic violations that need redesign." },
+                        { role: "BA",  color: getRoleStyle("BA"),  text: "Validate [BA]-tagged items against requirements. FLAGGED checks may indicate missing acceptance criteria." },
+                        { role: "PM",  color: getRoleStyle("All"), text: "Use Pages 1–5 for the executive view. This section is the detailed evidence behind those findings." },
+                      ].map(({ role, color, text }) => (
+                        <View key={role} style={styles.howToReadRow}>
+                          <Text style={[styles.howToReadRolePill, { backgroundColor: color.bg, color: color.color }]}>{role}</Text>
+                          <Text style={styles.howToReadText}>{text}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                </View>
+              )}
+
+              {/* Stats bar */}
+              <View style={{ flexDirection: "row", gap: 8, marginBottom: 8 }}>
+                {[
+                  { label: "Checks in section", value: String(totalChecks), bg: "#eef2ff", color: "#4f46e5" },
+                  { label: "Flagged by AI", value: String(flaggedChecks), bg: "#fef9c3", color: "#b45309" },
+                  { label: "Evaluated clean", value: String(totalChecks - flaggedChecks), bg: "#f0fdf4", color: "#16a34a" },
+                ].map((s) => (
+                  <View key={s.label} style={{ flex: 1, backgroundColor: s.bg, borderRadius: 5, padding: 7, alignItems: "center" }}>
+                    <Text style={{ fontSize: 13, fontFamily: "Helvetica-Bold", color: s.color }}>{s.value}</Text>
+                    <Text style={{ fontSize: 6, color: s.color }}>{s.label}</Text>
+                  </View>
+                ))}
+              </View>
+
+              {/* Column header */}
+              <View style={styles.checkColHeader}>
+                <Text style={[styles.checkColHeaderText, { width: 26 }]}>ID</Text>
+                <Text style={[styles.checkColHeaderText, { flex: 1 }]}>Check / Evaluation Criterion</Text>
+                <Text style={[styles.checkColHeaderText, { width: 28 }]}>Role</Text>
+                <Text style={[styles.checkColHeaderText, { width: 55, textAlign: "center" }]}>AI Result</Text>
+              </View>
+
+              {cats.map((cat) => {
+                const catFlagged = cat.items.filter((item) => findingMap.has(item.id)).length;
+                const allClear = catFlagged === 0;
+                return (
+                  <View key={cat.number}>
+                    {/* Category header */}
+                    <View style={styles.catHeader}>
+                      <Text style={styles.catHeaderText}>{cat.number}. {cat.name}</Text>
+                      <Text style={styles.catHeaderCount}>{cat.item_count} checks</Text>
+                      {allClear
+                        ? <Text style={styles.catAllClearBadge}>All Clear</Text>
+                        : <Text style={[styles.catAllClearBadge, { backgroundColor: "rgba(251,191,36,0.35)" }]}>{catFlagged} Flagged</Text>
+                      }
+                    </View>
+
+                    {/* Check rows */}
+                    {cat.items.map((item, itemIdx) => {
+                      const flagged = findingMap.get(item.id);
+                      const severityColors = flagged ? getCheckBadgeColors(flagged.severity) : null;
+                      const roleColors = getRoleStyle(item.role);
+                      const isAlt = itemIdx % 2 !== 0;
+                      return (
+                        <View
+                          key={item.id}
+                          style={[
+                            styles.checkRow,
+                            flagged ? styles.checkRowFlagged : isAlt ? styles.checkRowAlt : {},
+                          ]}
+                        >
+                          <Text style={styles.checkId}>{item.id}</Text>
+                          <View style={styles.checkTextCol}>
+                            <Text style={styles.checkText}>{item.text}</Text>
+                            {flagged && (
+                              <Text style={styles.checkFindingNote}>
+                                Finding: {flagged.title.length > 70 ? flagged.title.slice(0, 70) + "..." : flagged.title}
+                              </Text>
+                            )}
+                          </View>
+                          <Text style={[styles.roleBadge, { backgroundColor: roleColors.bg, color: roleColors.color }]}>
+                            {item.role}
+                          </Text>
+                          {flagged && severityColors ? (
+                            <Text style={[styles.checkBadge, { backgroundColor: severityColors.bg, color: severityColors.color }]}>
+                              {flagged.severity.toUpperCase()}
+                            </Text>
+                          ) : (
+                            <Text style={styles.checkPass}>Pass</Text>
+                          )}
+                        </View>
+                      );
+                    })}
+                  </View>
+                );
+              })}
+
+              {/* Role legend */}
+              <View style={[styles.divider, { marginTop: 10, marginBottom: 6 }]} />
+              <View style={styles.roleLegendRow}>
+                <Text style={{ fontSize: 6, color: "#9ca3af", fontFamily: "Helvetica-Bold" }}>ROLE KEY:</Text>
+                {[
+                  { role: "UX",  label: "UX Designer" },
+                  { role: "Dev", label: "Developer" },
+                  { role: "BA",  label: "Business Analyst" },
+                  { role: "QA",  label: "QA Engineer" },
+                  { role: "All", label: "All Roles" },
+                ].map(({ role, label }) => {
+                  const c = getRoleStyle(role);
+                  return (
+                    <View key={role} style={styles.roleLegendItem}>
+                      <Text style={[styles.howToReadRolePill, { backgroundColor: c.bg, color: c.color }]}>{role}</Text>
+                      <Text style={styles.roleLegendLabel}>{label}</Text>
+                    </View>
+                  );
+                })}
+                <Text style={[styles.roleLegendLabel, { marginLeft: 8 }]}>
+                  STATUS: CRITICAL / HIGH / MEDIUM / LOW = AI flagged issue  ·  Pass = evaluated clean
+                </Text>
+              </View>
             </View>
-          ))}
-        </View>
-        <View style={styles.divider} />
-        <Text style={{ fontSize: 8, color: "#9ca3af", textAlign: "center", lineHeight: 1.6 }}>
-          This report was generated by the Fusion UX platform. All findings were produced by AI analysis
-          and reviewed through a human-in-the-loop verification process.{"\n"}
-          Report generated: {new Date().toLocaleString()} · Confidential — not for external distribution.
-        </Text>
-        <PageFooter auditName={audit.name} pageNum="6" />
-      </Page>
+
+            <PageFooter auditName={audit.name} pageNum={String(6 + halfIdx)} />
+          </Page>
+        );
+      })}
     </Document>
   );
 }
