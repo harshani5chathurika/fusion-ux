@@ -12,11 +12,14 @@ export default async function AuditsPage() {
 
   const { data: audits } = await supabase
     .from("audits")
-    .select("id,name,status,audit_type,overall_score,target_url,critical_count,high_count,medium_count,created_at")
+    .select("id,name,status,audit_type,overall_score,target_url,critical_count,high_count,medium_count,created_at,project_id,projects(id,name)")
     .eq("created_by", user!.id)
     .order("created_at", { ascending: false });
 
-  const allAudits = audits ?? [];
+  const allAudits = (audits ?? []).map((a) => ({
+    ...a,
+    project: Array.isArray(a.projects) ? a.projects[0] ?? null : a.projects ?? null,
+  }));
 
   return (
     <div className="space-y-6 animate-fade-in">
