@@ -4,7 +4,6 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import {
   Search,
-  Filter,
   AlertTriangle,
   CheckCircle2,
   Clock,
@@ -12,6 +11,7 @@ import {
   Edit3,
   ChevronDown,
   ExternalLink,
+  FolderOpen,
 } from "lucide-react";
 import { formatRelative } from "@/lib/utils/format";
 import { SEVERITY_CONFIG } from "@/types";
@@ -52,6 +52,7 @@ export function FindingsClient({ findings }: { findings: Finding[] }) {
   const [severityFilter, setSeverityFilter] = useState<string>("all");
   const [verificationFilter, setVerificationFilter] = useState<string>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [collapsedAudits, setCollapsedAudits] = useState<Set<string>>(new Set());
 
   const filtered = useMemo(() => {
     return findings.filter((f) => {
@@ -65,6 +66,25 @@ export function FindingsClient({ findings }: { findings: Finding[] }) {
       return matchSearch && matchSeverity && matchVerification;
     });
   }, [findings, search, severityFilter, verificationFilter]);
+
+  const groupedByAudit = useMemo(() => {
+    const map = new Map<string, { auditId: string; auditName: string; findings: Finding[] }>();
+    for (const f of filtered) {
+      const key = f.audits?.id ?? "__none__";
+      const name = f.audits?.name ?? "No Audit";
+      if (!map.has(key)) map.set(key, { auditId: key, auditName: name, findings: [] });
+      map.get(key)!.findings.push(f);
+    }
+    return Array.from(map.values());
+  }, [filtered]);
+
+  function toggleAudit(auditId: string) {
+    setCollapsedAudits((prev) => {
+      const next = new Set(prev);
+      next.has(auditId) ? next.delete(auditId) : next.add(auditId);
+      return next;
+    });
+  }
 
   const counts = {
     critical: findings.filter((f) => f.severity === "critical").length,
@@ -145,118 +165,133 @@ export function FindingsClient({ findings }: { findings: Finding[] }) {
         )}
       </div>
 
-      {/* Findings list */}
+      {/* Findings grouped by audit */}
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <AlertTriangle className="h-10 w-10 mx-auto mb-3 opacity-30" />
           <p className="text-sm">No findings match your filters</p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {filtered.map((finding) => {
-            const severityConfig = SEVERITY_CONFIG[finding.severity];
-            const verConfig = VERIFICATION_CONFIG[finding.verification_status] ?? VERIFICATION_CONFIG.pending;
-            const isExpanded = expandedId === finding.id;
-            const priorityScore = finding.impact_score && finding.frequency_score
-              ? finding.impact_score * finding.frequency_score : null;
-
+        <div className="space-y-6">
+          {groupedByAudit.map(({ auditId, auditName, findings: groupFindings }) => {
+            const isCollapsed = collapsedAudits.has(auditId);
             return (
-              <div
-                key={finding.id}
-                className={cn(
-                  "rounded-xl border transition-all",
-                  isExpanded ? "border-primary/40 bg-primary/2" : "border-border bg-card hover:border-primary/30"
-                )}
-              >
+              <div key={auditId} className="space-y-2">
+                {/* Audit group header */}
                 <button
-                  className="w-full text-left px-5 py-4"
-                  onClick={() => setExpandedId(isExpanded ? null : finding.id)}
+                  onClick={() => toggleAudit(auditId)}
+                  className="w-full flex items-center gap-2 py-2 text-left group"
                 >
-                  <div className="flex items-start gap-3">
-                    <span
-                      className={cn(
-                        "text-[10px] font-bold px-1.5 py-0.5 rounded border flex-shrink-0 mt-0.5",
-                        severityConfig.bg,
-                        severityConfig.color,
-                        severityConfig.border
-                      )}
+                  <FolderOpen className="h-4 w-4 text-primary flex-shrink-0" />
+                  <span className="text-sm font-semibold text-foreground flex-1 truncate">{auditName}</span>
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                    {groupFindings.length} finding{groupFindings.length !== 1 ? "s" : ""}
+                  </span>
+                  {auditId !== "__none__" && (
+                    <Link
+                      href={`/audits/${auditId}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs text-primary hover:underline flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                      {severityConfig.label.toUpperCase()}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium leading-snug">{finding.title}</p>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
-                        {finding.heuristic_category && <span>{finding.heuristic_category}</span>}
-                        {finding.location && (
-                          <>
-                            <span>·</span>
-                            <span>📍 {finding.location}</span>
-                          </>
-                        )}
-                        {finding.audits && (
-                          <>
-                            <span>·</span>
-                            <span className="text-primary">{finding.audits.name}</span>
-                          </>
-                        )}
-                        <span>·</span>
-                        <span>{formatRelative(finding.created_at)}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {priorityScore && (
-                        <span className="text-xs font-bold text-primary">P{priorityScore}</span>
-                      )}
-                      <div className={cn("flex items-center gap-1", verConfig.color)}>
-                        {verConfig.icon}
-                        <span className="text-xs hidden sm:block">{verConfig.label}</span>
-                      </div>
-                      <ChevronDown className={cn(
-                        "h-4 w-4 text-muted-foreground transition-transform",
-                        isExpanded && "rotate-180"
-                      )} />
-                    </div>
-                  </div>
+                      <ExternalLink className="h-3 w-3" />
+                      Open audit
+                    </Link>
+                  )}
+                  <ChevronDown className={cn(
+                    "h-4 w-4 text-muted-foreground transition-transform flex-shrink-0",
+                    isCollapsed && "-rotate-90"
+                  )} />
                 </button>
+                <div className="h-px bg-border" />
 
-                {isExpanded && (
-                  <div className="px-5 pb-5 border-t border-border pt-4 space-y-4">
-                    {finding.description && (
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {finding.description}
-                      </p>
-                    )}
-                    <div className="grid grid-cols-2 gap-3">
-                      {finding.ai_suggestion && (
-                        <div className="rounded-lg bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800 p-3">
-                          <p className="text-xs font-semibold text-violet-700 dark:text-violet-300 mb-1">
-                            AI Recommendation
-                          </p>
-                          <p className="text-xs text-violet-800 dark:text-violet-200 leading-relaxed">
-                            {finding.ai_suggestion}
-                          </p>
+                {!isCollapsed && (
+                  <div className="space-y-2 pl-6">
+                    {groupFindings.map((finding) => {
+                      const severityConfig = SEVERITY_CONFIG[finding.severity];
+                      const verConfig = VERIFICATION_CONFIG[finding.verification_status] ?? VERIFICATION_CONFIG.pending;
+                      const isExpanded = expandedId === finding.id;
+                      const priorityScore = finding.impact_score && finding.frequency_score
+                        ? finding.impact_score * finding.frequency_score : null;
+
+                      return (
+                        <div
+                          key={finding.id}
+                          className={cn(
+                            "rounded-xl border transition-all",
+                            isExpanded ? "border-primary/40 bg-primary/2" : "border-border bg-card hover:border-primary/30"
+                          )}
+                        >
+                          <button
+                            className="w-full text-left px-5 py-4"
+                            onClick={() => setExpandedId(isExpanded ? null : finding.id)}
+                          >
+                            <div className="flex items-start gap-3">
+                              <span className={cn(
+                                "text-[10px] font-bold px-1.5 py-0.5 rounded border flex-shrink-0 mt-0.5",
+                                severityConfig.bg, severityConfig.color, severityConfig.border
+                              )}>
+                                {severityConfig.label.toUpperCase()}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium leading-snug">{finding.title}</p>
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
+                                  {finding.heuristic_category && <span>{finding.heuristic_category}</span>}
+                                  {finding.location && (
+                                    <><span>·</span><span>📍 {finding.location}</span></>
+                                  )}
+                                  <span>·</span>
+                                  <span>{formatRelative(finding.created_at)}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                {priorityScore && (
+                                  <span className="text-xs font-bold text-primary">P{priorityScore}</span>
+                                )}
+                                <div className={cn("flex items-center gap-1", verConfig.color)}>
+                                  {verConfig.icon}
+                                  <span className="text-xs hidden sm:block">{verConfig.label}</span>
+                                </div>
+                                <ChevronDown className={cn(
+                                  "h-4 w-4 text-muted-foreground transition-transform",
+                                  isExpanded && "rotate-180"
+                                )} />
+                              </div>
+                            </div>
+                          </button>
+
+                          {isExpanded && (
+                            <div className="px-5 pb-5 border-t border-border pt-4 space-y-4">
+                              {finding.description && (
+                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                  {finding.description}
+                                </p>
+                              )}
+                              <div className="grid grid-cols-2 gap-3">
+                                {finding.ai_suggestion && (
+                                  <div className="rounded-lg bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800 p-3">
+                                    <p className="text-xs font-semibold text-violet-700 dark:text-violet-300 mb-1">AI Recommendation</p>
+                                    <p className="text-xs text-violet-800 dark:text-violet-200 leading-relaxed">{finding.ai_suggestion}</p>
+                                  </div>
+                                )}
+                                {finding.business_impact && (
+                                  <div className="rounded-lg bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 p-3">
+                                    <p className="text-xs font-semibold text-orange-700 dark:text-orange-300 mb-1">Business Impact</p>
+                                    <p className="text-xs text-orange-800 dark:text-orange-200 leading-relaxed">{finding.business_impact}</p>
+                                  </div>
+                                )}
+                              </div>
+                              <Link
+                                href={`/audits/${finding.audits?.id}`}
+                                className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                                Review in audit workspace
+                              </Link>
+                            </div>
+                          )}
                         </div>
-                      )}
-                      {finding.business_impact && (
-                        <div className="rounded-lg bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 p-3">
-                          <p className="text-xs font-semibold text-orange-700 dark:text-orange-300 mb-1">
-                            Business Impact
-                          </p>
-                          <p className="text-xs text-orange-800 dark:text-orange-200 leading-relaxed">
-                            {finding.business_impact}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                    {finding.audits && (
-                      <Link
-                        href={`/audits/${finding.audits.id}`}
-                        className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                        Review in audit workspace
-                      </Link>
-                    )}
+                      );
+                    })}
                   </div>
                 )}
               </div>

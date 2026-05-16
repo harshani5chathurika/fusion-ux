@@ -14,6 +14,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { RecentAudits } from "@/components/dashboard/RecentAudits";
+import { GreetingHeader } from "@/components/dashboard/GreetingHeader";
 import { cn } from "@/lib/utils/cn";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -77,9 +78,7 @@ export default async function DashboardPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Good morning, {displayName} 👋
-          </h1>
+          <GreetingHeader name={displayName} />
           <p className="text-muted-foreground text-sm mt-1">
             Here&apos;s your UX intelligence overview
           </p>
